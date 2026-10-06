@@ -504,8 +504,9 @@
                 const ps = a => [[cx - a, cy, 1], [cx + a, cy, 1], [cx - a, cy, 0], [cx + a, cy, 0]];
                 const p5 = al => [[cx - 0.99 * u, cy - dy, al], [cx + 0.99 * u, cy - dy, al], [cx - 0.99 * u, cy + dy, al], [cx + 0.99 * u, cy + dy, al]];
                 const pt = al => {
-                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy - b2 + 0.12s * u;
+                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy - b2 + 0.12 * u;
                     return [[cx - e, yU, al], [cx + e, yU, al], [cx - e, yL, al], [cx + e, yL, al]];
+                };
                 const pl = [[0, 1, 2, 3].map(() => [cx, cy - 0.78 * u, 0]), ps(0.8 * u), ps(0.9 * u), ps(1.17 * u), p5(0), pt(1), p5(1), p5(1), p5(0)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
