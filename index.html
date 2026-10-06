@@ -503,7 +503,10 @@
 
                 const ps = a => [[cx - a, cy, 1], [cx + a, cy, 1], [cx - a, cy, 0], [cx + a, cy, 0]];
                 const p5 = al => [[cx - 0.99 * u, cy - dy, al], [cx + 0.99 * u, cy - dy, al], [cx - 0.99 * u, cy + dy, al], [cx + 0.99 * u, cy + dy, al]];
-                const pl = [[0, 1, 2, 3].map(() => [cx, cy - 0.78 * u, 0]), ps(0.8 * u), ps(0.9 * u), ps(1.17 * u), p5(0), ps(1), p5(1), p5(1), p5(0)][ph];
+                const pt = al => {
+                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy - b2 + 0.12s * u;
+                    return [[cx - e, yU, al], [cx + e, yU, al], [cx - e, yL, al], [cx + e, yL, al]];
+                const pl = [[0, 1, 2, 3].map(() => [cx, cy - 0.78 * u, 0]), ps(0.8 * u), ps(0.9 * u), ps(1.17 * u), p5(0), pt(1), p5(1), p5(1), p5(0)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
 
@@ -561,7 +564,7 @@
             }
 
             function chromatid(c, i, k, hl, dim){
-                const col = 'hsl(' + hue(i >> i) + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% )', [dx, dy] = drift(i, k);
+                const col = 'hsl(' + hue(i >> 1) + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% )', [dx, dy] = drift(i, k);
                 ctx.save(); 
                 ctx.globalAlpha = dim ? 0.55 : 1;
                 ctx.translate(c.x + dx, c.y + dy);
@@ -609,7 +612,7 @@
                 ctx.font = '700 12px system-ui, sans-serif';
                 const pw = ctx.measureText(txt).width + 16;
                 const x = Math.max(pw / 2 + 4, Math.min(W - pw / 2 - 4, c.x + dx)), y = Math.max(16, c.y + dy - rad - 12);
-                ctx.fillStyle = 'hsl('+ hue(i) +' 80% 58%)';
+                ctx.fillStyle = 'hsl('+ hue(i >> 1) +' 80% 72%)';
                 ctx.beginPath();
                 ctx.roundRect(x - pw / 2, y - 11, pw, 22, 11);
                 ctx.fill();
@@ -722,6 +725,7 @@
                     ctx.arc(c.x + dx, c.y + dy, r, 0, 7);
                     ctx.stroke();
                     ctx.restore();
+                    label(c, sel, r);
                 });
             }
 
