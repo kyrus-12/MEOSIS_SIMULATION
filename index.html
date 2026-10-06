@@ -348,7 +348,7 @@
             };
 
             function showFormula(){
-                $('#formula').innerHTML = '2n = ' +n;
+                $('#formula').innerHTML = '2n = ' +N;
             };
 
             function setN(v){
@@ -425,13 +425,13 @@
                 d.classList.toggle('bad', s.ok === false);
                 m.textContent = s.ok === true ? '✔' : s.ok === false ? '✘' : '';
                 m.style.color = s.ok ? '#16a34a' : '#dc2626';
-                d.querySelector('.msg').textContent = s.ok === true ? q.ok(n) : s.ok === false ? 'Not quite. '+q.h : '';
+                d.querySelector('.msg').textContent = s.ok === true ? q.ok(N) : s.ok === false ? 'Not quite. '+q.h : '';
             }
 
             function summary(){
                 let here = 0, all = 0, tot = 0;
                 Q[phase].forEach((q, i) => {if((ans[qk(i)] || {}).ok) here++});
-                Q.forEach((qs, p) => qs.forEach((q, i) => { tot++; if ((ans[n+'|'+p+'|'+i] || {}).ok)all++}));
+                Q.forEach((qs, p) => qs.forEach((q, i) => { tot++; if ((ans[N+'|'+p+'|'+i] || {}).ok)all++}));
                 const done = here === Q[phase].length;
                 $('#fb').className = done ? 'done' : '';
                 $('#fbm').textContent = done ? (phase < 4 ? 'Phase complete! Try '+PH[phase + 1].n+' next. 🥹' : 'All phases done! Try another chromosome number. 🥳') : here+' of '+Q[phase].length+ ' correct. Answers are checked automatically.';
@@ -480,8 +480,6 @@
 
             const hue = p => p < 5 ? HUE[p] : (p * 137.508 + 20) %360;
 
-            const ang = i => ROT[i % 5] + Math.floor(i / 5) * 0.9;
-
             function sp(i, cnt, rmax, rs){
                 if(cnt <= 5) return cnt < 2 ? [0,0]: [Math.cos(6.2832 * i / cnt) * rs, Math.sin(6.2832 * i / cnt) * rs];
                 const r = rmax * Math.sqrt((i + 0.5) / cnt), a = i * 2.39996;
@@ -529,9 +527,9 @@
                     } else if(ph == 5){
                         v = sp(p, P, 0.3 * u, 0.18 * u);
                         m = xs(cx + v[0], cy + s * dy + v[1], L, a, 0.25, 0, q, mW)
-                    } else if(phase == 6){
+                    } else if(ph == 6){
                         m = xs(cx, cy + s * dy + r * g2, L, 0, 0, 0, q, mW);
-                    } else if(phase == 7){
+                    } else if(ph == 7){
                         const y = cy + s * dy + r * g2;
                         m = [mk(cx - 0.55 * u, y, L, mW, 0, 0, 0.32 * L, 0.32 * L), mk(cx + 0.55 * u, y, L, mW, 0, 0, -0.32 * L, -0.32 * L)]
                     } else {
@@ -546,29 +544,15 @@
             }
             const CK = ['x', 'y', 'tx', 'bx', 'L', 'w', 'wave', 'ang'];
             
-
-
-
-
-
-
-            function cellPath(cx, cy, a, b, p){
-                ctx.beginPath();
-                for(let i = 0; i <= 90; i++){
-                    const th = i / 90 * Math.PI * 2, s = Math.sin(th), y = b* s * (1 - p* Math.pow(Math.abs(s), 8)), x = a * Math.cos(th);
-                    i ? ctx.lineTo(cx + x, cy + y) : ctx.moveTo(cx + x, cy + y);
-                }
-                ctx.closePath();
-            }
-
+        
             function drift(i, k){
                 const s = phase < 2 ? 1 : 0.35;
                 return[Math.sin(t * 0.9 + i * 1.7 + k * 2) * 0.012 * R * s, 
-                Math.cos(t * 0.8 + 1 * 2.3 + k) * 0.012 * R * s];
+                Math.cos(t * 0.8 + i * 2.3 + k) * 0.012 * R * s];
             }
 
             function chromatid(c, i, k, hl, dim){
-                const col = 'hsl(' + hue(i >> i) + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% ', [dx, dy] = drift(i, k);
+                const col = 'hsl(' + hue(i >> i + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% '), [dx, dy] = drift(i, k);
                 ctx.save(); 
                 ctx.globalAlpha = dim ? 0.55 : 1;
                 ctx.translate(c.x + dx, c.y + dy);
@@ -742,7 +726,7 @@
                         while(cur.ch.length < N)cur.ch.push(JSON.parse(JSON.stringify(T.ch[cur.ch.length])));
                         cur.sp = T.sp;
                         ['spin', 'chi'].forEach(k => cur[k] = lerp(cur[k], T[k], f));
-                        ['c', 'pl'].forEach(k => cur[k].forEach((s, i)> s.forEach((v, m) => s[m] = lerp(v, T[k][i][m], f))))
+                        ['c', 'pl'].forEach(k => cur[k].forEach((s, i) => s.forEach((v, m) => s[m] = lerp(v, T[k][i][m], f))))
                         cur.ch.forEach((pr, i) => pr.forEach((c, k) => CK.forEach(qq => c[qq] = lerp(c[qq], T.ch[i][k][qq], f))));
                     }
                     draw();
