@@ -434,7 +434,7 @@
                 Q.forEach((qs, p) => qs.forEach((q, i) => { tot++; if ((ans[N+'|'+p+'|'+i] || {}).ok)all++}));
                 const done = here === Q[phase].length;
                 $('#fb').className = done ? 'done' : '';
-                $('#fbm').textContent = done ? (phase < 4 ? 'Phase complete! Try '+PH[phase + 1].n+' next. 🥹' : 'All phases done! Try another chromosome number. 🥳') : here+' of '+Q[phase].length+ ' correct. Answers are checked automatically.';
+                $('#fbm').textContent = done ? (phase < 8 ? 'Phase complete! Try '+PH[phase + 1].n+' next. 🥹' : 'All phases done! Try another chromosome number. 🥳') : here+' of '+Q[phase].length+ ' correct. Answers are checked automatically.';
                 $('#score').textContent = all + ' / '+tot;
             }
 
@@ -544,7 +544,16 @@
             }
             const CK = ['x', 'y', 'tx', 'bx', 'L', 'w', 'wave', 'ang'];
             
-        
+
+            function cellPath(cx, cy, a, b, p){
+                ctx.beginPath();
+                for(let i = 0; i <= 90; i++){
+                    const th = i / 90 * Math.PI * 2, s = Math.sin(th), y = b* s * (1 - p* Math.pow(Math.abs(s), 8)), x = a * Math.cos(th);
+                    i ? ctx.lineTo(cx + x, cy + y) : ctx.moveTo(cx + x, cy + y);
+                }
+                ctx.closePath();
+            }
+
             function drift(i, k){
                 const s = phase < 2 ? 1 : 0.35;
                 return[Math.sin(t * 0.9 + i * 1.7 + k * 2) * 0.012 * R * s, 
@@ -552,7 +561,7 @@
             }
 
             function chromatid(c, i, k, hl, dim){
-                const col = 'hsl(' + hue(i >> i + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% '), [dx, dy] = drift(i, k);
+                const col = 'hsl(' + hue(i >> i) + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% )', [dx, dy] = drift(i, k);
                 ctx.save(); 
                 ctx.globalAlpha = dim ? 0.55 : 1;
                 ctx.translate(c.x + dx, c.y + dy);
@@ -624,7 +633,7 @@
                     ctx.fillStyle = g('--cell');
                     ctx.fill();
                     ctx.lineWidth = 3;
-                    ctx.strokeStyle = g('cellline');
+                    ctx.strokeStyle = g('--cellline');
                     ctx.stroke();
                 });
 
@@ -686,7 +695,7 @@
                 if(S.chi > 0.02){
                     ctx.save();
                     ctx.globalAlpha = S.chi;
-                    ctx.strokeTyle = '#111';
+                    ctx.strokeStyle = '#111';
                     ctx.lineWidth = 1.8;
                     for(let p = 0; p < P; p++){
                         const a  = S.ch[2*p][0], b = S.ch[2 * p + 1] && S.ch[2 * p + 1][0];
@@ -701,7 +710,7 @@
                     }
                     ctx.restore();
                 }
-                const Pr = S.ch[sel], sep = Math.hypot(pr[0].x - pr[1].x, pr[0].y - pr[1].y) > 0.3 * u;
+                const pr = S.ch[sel], sep = Math.hypot(pr[0].x - pr[1].x, pr[0].y - pr[1].y) > 0.3 * u;
                 (sep ? pr : [pr[0]]).forEach(c => {
                     const [dx, dy] = drift(sel, 0), r = Math.max(0.22 * u * scl(), 14) + Math.sin(t * 4) * 3;
                     ctx.save();
