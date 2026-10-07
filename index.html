@@ -506,20 +506,20 @@
                         c = [A, B, z(A), z(B)];
                     } else {
                         const xo = 0.4 * u;
-                        c = [[c - xo, cy - dy, rc, rc, 1, 0], [cx - xo, cy + dy, rc, rc, 1, 0], [cx + xo, cy - dy, rc, rc, 1, 0], [cx + xo, cy + dy, rc, rc, 1, 0]];
+                        c = [[cx - xo, cy - dy, rc, rc, 1, 0], [cx - xo, cy + dy, rc, rc, 1, 0], [cx + xo, cy - dy, rc, rc, 1, 0], [cx + xo, cy + dy, rc, rc, 1, 0]];
                     }
                 } else {
                     const a = 0.5 * u, x = 0.6 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
                 }
 
                 const ps = a => [[cx, cy - a, 1], [cx, cy + a, 1], [cx, cy - a, 0], [cx, cy + a, 0]];
-                const p5 = al => [[cx - 0.99 * u, cy - dy, al], [cx + 0.99 * u, cy - dy, al], [cx - 0.99 * u, cy + dy, al], [cx + 0.99 * u, cy + dy, al]];
+                const p5 = (al, d) => [[cx - d, cy - dy, al], [cx - d, cy + dy, al], [cx + d, cy - dy, al], [cx + d, cy + dy, al]];
                 const pt = al => {
                     const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy + b2 - 0.12 * u;
                     return [[cx - e, yU, al], [cx - e, yL, al], [cx + e, yU, al], [cx + e, yL, al]];
                 };
                 const p0 = [[cx - 0.07 * u, cy - 0.78 * u, 1], [cx + 0.07 * u, cy - 0.78 * u, 1], [cx - 0.07 * u, cy - 0.78 * u, 0], [cx + 0.07 * u, cy - 0.78 * u, 0]];
-                const pl = [p0, ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), pt(1), p5(1, 0.4 * u), p5(1, 0.8 * u), p5(0, 0.8 * u)][ph];
+                const pl = [p0, ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), pt(1), p5(1, 0.4 * u), p5(1, 0.4 * u), p5(1, 0.8 * u), p5(0, 0.6 * u)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
 
@@ -554,7 +554,7 @@
                         m = [0, 1].map(k => mk(cx + (k ? 0.6 : -0.6) * u + v[0], cy + s * dy + v[1], Ls, w2, 0.7, a, 0, 0))
                     }
                     ch.push(m);
-                    spa.push(ph == 2 || ph == 3 ? [j, j] : ph == 6 || ph == 7 ? [2 * j, 2 * j + 1] : [-1, -1]);
+                    spa.push(ph == 2 || ph == 3 ? [j, j] : ph == 6 || ph == 7 ? [j, j + 2] : [-1, -1]);
                 }
                 return{c, pl, sp : spa, spin : (ph == 2 || ph == 3 || ph == 6 || ph == 7) ? 1 : 0, chi : (ph == 1 || ph == 2) ? 1 : 0, ch};
             }
