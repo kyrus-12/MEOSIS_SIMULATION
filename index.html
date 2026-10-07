@@ -487,20 +487,19 @@
             }
 
             function target(ph){
-                const cx = W/2, cy = H/2, u = R, sc = scl(), uu = u * sc, L = 0.28 * uu, q = 0.18 * L, dy = 0.55 * u, a2 = 1.1 * u, b2 = 0.52 * u;
+                const cx = W/2, cy = H/2, u = R, sc = scl(), uu = u * sc, L = 0.28 * uu, q = 0.18 * L, dy = 0.6 * u, a2 = 1.1 * u, b2 = 0.5 * u;
                 const mW = Math.max(Math.max(2.2, 5 * sc), 0.035 * uu);
                 const g = Math.min(0.4 * uu, 1.6 * u / (P - 1)), g2 = Math.min(1.1 * L, (1.7 * b2 - L) / (P - 1));
                 const z = s => [s[0], s[1], s[2], s[3], 0, 0];
 
                 let c;
-                if(ph<4){
-                    const s = [[cx, cy, u, u, 1, 1], [cx, cy, u, u, 1, 0.3], [cx, cy, u, u, 1, 0], [cx, cy, 1.3 * u, 0.95 * u, 1, 0]][ph]; c = [s, z(s), z(s), z(s)]    
+                if(ph<3){
+                    const s = [[cx, cy, u, u, 1, 1], [cx, cy, u, u, 1, 0.3], [cx, cy, u, u, 1, 0]][ph]; c = [s, z(s), z(s), z(s)] } else { const A = cx, cy - 0.42 * u, u, 0.7 * u, 1, 0], B = [cx, cy + 0.42 * u, u, 0.7 * u, 1, 0]; c = [A, B, z(A), z(B)]   
                 } else if(ph < 8){
-                    const nu = [1, 0.3, 0, 0][ph - 4], bb = ph == 4 ? 0.57 * u : b2, A = [cx, cy - dy, a2, bb, 1, nu], B = [cx, cy + dy, a2, bb, 1, nu]; c = [A, B, z(A), z(B)]
+                    const nu = [1, 0.3, 0, 0][ph - 4], bb = b2, A = [cx, cy - dy, a2, bb, 1, nu], B = [cx, cy + dy, a2, bb, 1, nu]; c = [A, B, z(A), z(B)]
                 } else {
                     const a = 0.6 * u, x = 0.56 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
-                }
-
+                }       
                 const ps = a => [[cx - a, cy, 1], [cx + a, cy, 1], [cx - a, cy, 0], [cx + a, cy, 0]];
                 const p5 = al => [[cx - 0.99 * u, cy - dy, al], [cx + 0.99 * u, cy - dy, al], [cx - 0.99 * u, cy + dy, al], [cx + 0.99 * u, cy + dy, al]];
                 const pt = al => {
