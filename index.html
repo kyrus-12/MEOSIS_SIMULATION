@@ -314,7 +314,7 @@
             ];
 
             const HUE = [330, 200, 265, 155, 40];
-            let N = 10, P = 5, phase = 0, sel = 0, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
+            let N = 10, P = 5, phase = 0, sel = -1, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
             const cvs = $('#c'), ctx = cvs.getContext('2d');
 
             const stepsEl = $('#steps');
@@ -356,7 +356,7 @@
                 if(!v || v < 2) v = 2;
                 N = Math.min(46, v);
                 P = N / 2;
-                if(sel >= N) sel = N - 1;
+                if(sel >= N) sel = -1;
                 $('#cnt').value = N;
                 showFormula();
                 renderQuiz();
@@ -556,7 +556,7 @@
                     ch.push(m);
                     spa.push(ph == 1 || ph == 2 || ph == 3 ? [j, j] : ph == 5 || ph == 6 || ph == 7 ? [j, j + 2] : [-1, -1]);
                 }
-                return{c, pl, sp : spa, spin : (ph == 2 || ph == 3 || ph == 6 || ph == 7) ? 1 : (ph == 1 || ph == 5) ? 0.7 : 0, chi : (ph == 1 || ph == 2) ? 1 : 0, ch};
+                return{c, pl, sp : spa, spin : (ph == 2 || ph == 3 || ph == 6 || ph == 7) ? 1 : (ph == 1 || ph == 5) ? 0.7 : 0, chi : 0, ch};
             }
             const CK = ['x', 'y', 'tx', 'bx', 'L', 'w', 'wave', 'ang'];
             
@@ -709,8 +709,8 @@
                     ctx.restore();
                 });
 
-                const order = [...S.ch.keys()].filter(i => i !== sel).concat(sel);
-                order.forEach(i => S.ch[i].forEach((c, k) => chromatid(c, i, k, i === sel, i !== sel)));
+                const order = sel >= 0 ? [...S.ch.keys()].filter(i => i !== sel).concat(sel) : [...S.ch.keys()];
+                order.forEach(i => S.ch[i].forEach((c, k) => chromatid(c, i, k, i === sel, sel >= 0 && i !== sel)));
 
                 if(S.chi > 0.02){
                     ctx.save();
@@ -730,21 +730,23 @@
                     }
                     ctx.restore();
                 }
-                const pr = S.ch[sel], sep = Math.hypot(pr[0].x - pr[1].x, pr[0].y - pr[1].y) > 0.3 * u;
-                (sep ? pr : [pr[0]]).forEach(c => {
-                    const [dx, dy] = drift(sel, 0), r = Math.max(0.22 * u * scl(), 14) + Math.sin(t * 4) * 3;
-                    ctx.save();
-                    ctx.setLineDash([5, 5]);
-                    ctx.lineDashOffset = -t * 18;
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = 'hsl('+hue(sel >> 1)+' 90% 45%)';
-                    ctx.beginPath();
-                    ctx.arc(c.x + dx, c.y + dy, r, 0, 7);
-                    ctx.stroke();
-                    ctx.restore();
-                    label(c, sel, r);
-                });
-            }
+                if(sel >= 0){
+                    const pr = S.ch[sel], sep = Math.hypot(pr[0].x - pr[1].x, pr[0].y - pr[1].y) > 0.3 * u;
+                    (sep ? pr : [pr[0]]).forEach(c => {
+                        const [dx, dy] = drift(sel, 0), r = Math.max(0.22 * u * scl(), 14) + Math.sin(t * 4) * 3;
+                        ctx.save();
+                         ctx.setLineDash([5, 5]);
+                         ctx.lineDashOffset = -t * 18;
+                         ctx.lineWidth = 2;
+                         ctx.strokeStyle = 'hsl('+hue(sel >> 1)+' 90% 45%)';
+                         ctx.beginPath();
+                         ctx.arc(c.x + dx, c.y + dy, r, 0, 7);
+                          ctx.stroke();
+                          ctx.restore();
+                          label(c, sel, r);
+                        });
+                    }
+                }
 
             function frame(now){
                 const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
@@ -779,7 +781,7 @@
 
             cvs.addEventListener('pointerdown', e => {
                 const i = hit(e);
-                if(i >= 0)sel = i
+                if(i >= 0)sel = (sel === i) ? -1 : i
             });
 
             cvs.addEventListener('pointermove', e => {
