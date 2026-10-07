@@ -500,7 +500,14 @@
                         const A = [cx, cy - 0.42 * u, u, 0.7 * u, 1, 0], B = [cx, cy + 0.42 * u, u, 0.7 * u, 1, 0]; c = [A, B, z(A), z(B)]
                     }   
                 } else if(ph < 8){
-                    const nu = [1, 0.3, 0, 0][ph - 4], bb = b2 == 4 ? 0.57 * u : b2, A = [cx, cy - dy, a2, bb, 1, nu], B = [cx, cy + dy, a2, bb, 1, nu]; c = [A, B, z(A), z(B)]
+                    const nu = [1, 0.3, 0, 0][ph - 4], rc = b2; 
+                    const A = [cx, cy - dy, rc, rc, 1, nu], B = [cx, cy + dy, rc, rc, 1, nu];
+                    if(ph < 7){
+                        c = [A, B, z(A), z(B)];
+                    } else {
+                        const xo = 0.4 * u;
+                        c = [[c - xo, cy - dy, rc, rc, 1, 0], [cx - xo, cy + dy, rc, rc, 1, 0], [cx + xo, cy - dy, rc, rc, 1, 0], [cx + xo, cy + dy, rc, rc, 1, 0]];
+                    }
                 } else {
                     const a = 0.5 * u, x = 0.6 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
                 }
@@ -508,10 +515,11 @@
                 const ps = a => [[cx, cy - a, 1], [cx, cy + a, 1], [cx, cy - a, 0], [cx, cy + a, 0]];
                 const p5 = al => [[cx - 0.99 * u, cy - dy, al], [cx + 0.99 * u, cy - dy, al], [cx - 0.99 * u, cy + dy, al], [cx + 0.99 * u, cy + dy, al]];
                 const pt = al => {
-                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy - b2 + 0.12 * u;
-                    return [[cx - e, yU, al], [cx + e, yU, al], [cx - e, yL, al], [cx + e, yL, al]];
+                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy + b2 - 0.12 * u;
+                    return [[cx - e, yU, al], [cx - e, yL, al], [cx + e, yU, al], [cx + e, yL, al]];
                 };
-                const pl = [[0, 1, 2, 3].map(() => [cx, cy - 0.78 * u, 0]), ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), p5(0), pt(1), p5(1), p5(1), p5(0)][ph];
+                const p0 = [[cx - 0.07 * u, cy - 0.78 * u, 1], [cx + 0.07 * u, cy - 0.78 * u, 1], [cx - 0.07 * u, cy - 0.78 * u, 0], [cx + 0.07 * u, cy - 0.78 * u, 0]];
+                const pl = [p0, ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), pt(1), p5(1, 0.4 * u), p5(1, 0.8 * u), p5(0, 0.8 * u)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
 
@@ -670,7 +678,7 @@
             
                 if(S.spin > 0.02){
                     ctx.save();
-                    ctx.globalAlpha = S.spin * Math.max(0.12, Math.min(0.45, 4 / N));
+                    ctx.globalAlpha = S.spin * Math.max(0.3, Math.min(0.55, 6 / N));
                     ctx.strokeStyle = g('--fg');
                     ctx.lineWidth = 1.2;
                     ctx.setLineDash([5, 4]);
