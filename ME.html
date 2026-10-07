@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Meosis Simulation</title>
+    <style>
+        :root{
+            --bg:#fff;
+            --fg:#000;
+            --muted:#333;
+            --panel:#fff;
+            --line:#d4d4d8;
+            --cell:#f7f8fc;
+            --cellline:#9aa3b8;
+            --nuc:#0284c7;
+            color-scheme:light;
+            box-sizing:border-box;
+            padding-top:env(safe-area-inset-top, 0px);
+            padding-bottom:env(safe-area-inset-bottom, 0px);
+        }
+        html{
+            height:100%;
+            scroll-padding-top:env(safe-area-inset-top, 0px);
+        }
+        body{
+            min-height:100%;
+            margin:0;
+            background:var(--bg);
+            color:var(--fg);
+            font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        .app{
+            display:flex;
+            flex-direction:column;
+            min-height:100%;
+        }
+        .stage{
+            display:flex;
+            flex-direction:column;
+            flex:0 0 auto;
+        }
+        .steps{
+            display:grid;
+            grid-template-columns:repeat(5, 1fr);
+            gap:6px;
+            padding:10px 10px 6px;
+        }
+        .step{
+            min-width:0;
+            border:1px solid var(--line);
+            background:var(--panel);
+            color:var(--muted);
+            border-radius:12px;
+            padding:7px 2px; 
+            font:600 clamp(10px, 2.6vw, 13px) inherit;
+            font-family:inherit;
+            cursor:pointer;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:3px;
+            transition:all 0.3s;
+        }
+        .step i{
+            width:8px;
+            height:8px;
+            border-radius:50%;
+            background:var(--c);
+            opacity:0.5;
+            transition:all 0.3s;
+            font-style:normal;
+            display:none;
+        }
+        .step.on{
+            color:var(--fg);
+            border-color:var(--c);
+            background:color-mix(in srgb, var(--c) 20%, var(--panel));
+        }
+        .step.on i{
+            opacity:1;
+            box-shadow:0 0 10px var(--c);
+            transform:scale(1.4);
+            display:none;
+        }
+        main{
+            height:clamp(300px, 46vh, 540px);
+            position:relative;
+        }
+        canvas{
+            position:absolute;
+            inset:0;
+            width:100%;
+            height:100%;
+            touch-action:manipulation;
+        }
+        .ctrl{
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:center;
+            align-items:center;
+            gap:8px;
+            padding:8px 10px 2px;
+        }
+        .hint{
+            margin:2px 10px 10px;
+            text-align:center;
+            font-size:12px;
+            color:var(--muted);
+        }
+        .btn{
+            border:1px solid var(--line);
+            background:var(--panel);
+            color:var(--fg);
+            border-radius:10px;
+            padding:8px 14px;
+            font:inherit;
+            font-size:14px;
+            cursor:pointer;
+        }
+        .btn:active{
+            transform:scale(0.96);
+        }
+        .btn.main{
+            background:#6366f1;
+            border-color:#6366f1;
+            color:#fff;
+        }
+        .cnt{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            font-size:13px;
+            color:var(--muted);
+        }
+        .cnt .btn{
+            padding:6px 11px;
+        }
+        .cnt input{
+            width:60px;
+            text-align:center;
+            border:1px solid var(--line);
+            background:var(--panel);
+            color:var(--fg);
+            border-radius:10px;
+            padding:7px 4px;
+            font:inherit;
+            font-size:16px;
+        }
+        .box{
+            padding:14px;
+            border-top:1px solid var(--line);
+        }
+        .fhead{
+            display:flex;
+            align-items:baseline;
+            justify-content:space-between;
+            gap:10px;
+        }
+        #formula{
+            font-weight:800;
+            font-size:clamp(28px, 7vw, 38px);
+            line-height:1.1;
+        }
+        #formula small{
+            display:block;
+            font-size:12px;
+            font-weight:600;
+            color:var(--muted);
+            margin:2px;
+        }
+        #phname{
+            font-weight:800;
+            font-size:clamp(16px, 4.4vw, 20px);
+        }
+        #phtxt{
+            font-size:13px;
+            color:var(--muted);
+            margin:6px 0 12px;
+            line-height:1.4;
+        }
+        .q{
+            border:1px solid var(--line);
+            border-radius:12px;
+            padding:8px 10px;
+            margin-bottom:8px;
+            transition:background 0.2s, border-color 0.2s;
+        }
+        .q.ok{
+            border-color:green;
+            background:#f0fdf4;
+        }
+        .q.bad{
+            border-color:red;
+            background:#fef2f2;
+        }
+        .qr{
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .qr label{
+            flex:1;
+            font-size:14px;
+            line-height:1.3;
+        }
+        .qr input{
+            width:64px;
+            text-align:center;
+            font:inherit;
+            font-size:16px;
+            font-weight:700;
+            border:1px solid var(--line);
+            border-radius:10px;
+            padding:6px 4px;
+            background:#fff;
+            color:#000;
+        }
+        .mark{
+            width:20px;
+            text-align:center;
+            font-weight:800;
+        }
+        .msg{
+            display:none;
+            font-size:12.5px;
+            line-height:1.35;
+            margin-top:6px;
+        }
+        .q.ok .msg{
+            display:block;
+            color:black;
+        }
+        .q.bad .msg{
+            display:block;
+            color:black;
+        }
+        #fb{
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+            font-size:14px;
+            font-weight:600;
+            padding:10px 12px;
+            border-radius:12px;
+            background:#f4f4f5;
+        }
+        #fb.done{
+            background:#f4f4f5;
+            color:black;
+        }
+        @media(min-width:900px){
+            body{
+                height:100%;
+                overflow:hidden;
+            }
+            .app{
+                flex-direction:row;
+                height:100%;
+            }
+            .stage{
+                flex:1;
+                min-width:0;
+            }
+            main{
+                flex:1;
+                height:auto;
+                min-height:0;
+            }
+            .box{
+                flex:0 0 390px;
+                width:390px;
+                overflow:auto;
+                border-top:0;
+                border-left:1px solid var(--line);
+            }
+        }
+    </style>
+    </head>
+    <body>
+        <div class="app">
+            <section class="stage">
+                <div class="steps" id="steps"></div>
+                <main><canvas id="c"></canvas></main>
+                <div class="ctrl">
+                    <button class="btn" id="prev">◀️</button>
+                    <button class="btn" id="play">[ ▸ ]</button>
+                    <button class="btn" id="next">▶️</button>
+                    <span class="cnt">Chromosomes (2n)
+                        <button class="btn" id="minus">-</button><input id="cnt" type="number" min="2" max="46" inputmode="numeric" aria-label="Number of Chromosomes"><button class="btn" id="plus">+</button>
+                    </span>
+                </div>
+                <p class="hint"></p>
+            </section>
+            <aside class="box">
+                <div class="fhead"><div id="formula"></div><div id="phname"></div></div>
+                <p id="phtxt"></p>
+                <div id="qs"></div>
+                <div id="fb"><span id="fbm"></span><b id="score"></b></div>
+            </aside>
+        </div>
+        <script>
+            const $ = s => document.querySelector(s), lerp = (a,b,k) => a+(b-a)*k;
+            const PH = [
+                {n: 'Interphase', c:'violet', t: 'Insert simple definition here or instruction.'},
+                {n: 'Prophase I', c:'violet', t: 'Insert simple definition here or instruction.'},
+                {n: 'Metaphase I', c:'violet', t: 'Insert simple definition here or instruction.'},
+                {n: 'Anaphase I', c:'violet', t: 'Insert simple definition here or instruction.'},
+                {n: 'Telophase I', c:'violet', t: 'Insert simple definition here or instruction.'},
+                {n: 'Prophase II', c:'orange', t: 'Insert simple definition here or instruction.'},
+                {n: 'Metaphase II', c:'orange', t: 'Insert simple definition here or instruction.'},
+                {n: 'Anaphase II', c:'orange', t: 'Insert simple definition here or instruction.'},
+                {n: 'Telophase II', c:'orange', t: 'Insert simple definition here or instruction.'},
+            ];
+
+            const HUE = [330, 200, 265, 155, 40];
+            let N = 10, P = 5, phase = 0, sel = 0, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
+            const cvs = $('#c'), ctx = cvs.getContext('2d');
+
+            const stepsEl = $('#steps');
+            PH.forEach((p, i) => { 
+                const b = document.createElement('button'); 
+                b.className = 'step';
+                b.style.setProperty('--c', p.c);
+                b.innerHTML = '<i></i>' + p.n;
+                b.onclick = () => setPhase(i); 
+                stepsEl.appendChild(b)
+            });
+
+            function setPhase(p){
+                phase = (p+9)%9;
+                [...stepsEl.children].forEach((b, i) => b.classList.toggle('on', i === phase));
+                showFormula();
+                renderQuiz();
+            }
+
+            $('#prev').onclick = () => setPhase(phase - 1);
+            $('#next').onclick = () => setPhase(phase + 1);
+            $('#play').onclick = () => {
+                if(timer){
+                    clearInterval(timer);
+                    timer = null;
+                    $('#play').textContent = '[ ▸ ]';
+                } else {
+                    $('#play').textContent = '❚❚';
+                    timer = setInterval(() => setPhase (phase + 1), 4200);
+                }
+            };
+
+            function showFormula(){
+                $('#formula').innerHTML = '2n = ' +N;
+            };
+
+            function setN(v){
+                v = Math.round(+v / 2) * 2;
+                if(!v || v < 2) v = 2;
+                N = Math.min(46, v);
+                P = N / 2;
+                if(sel >= N) sel = N - 1;
+                $('#cnt').value = N;
+                showFormula();
+                renderQuiz();
+            }
+
+            const mq = (q, a, ok, h) => ({q, a, ok, h});
+            const Q = [
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + '  chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+            ];
+
+            const ans = {}, qk = i => N + '|' +phase+ '|' + i;
+
+            function renderQuiz(){
+                const Pp = PH[phase], box = $('#qs');
+                $('#phname').textContent = Pp.n;
+                $('#phname').style.color = Pp.c;
+                $('#phtxt').textContent = Pp.t;
+                box.innerHTML = '';
+
+                Q[phase].forEach((q, i) => {
+                    const d = document.createElement('div');
+                    d.className = 'q';
+                    d.innerHTML = '<div class="qr"><label for="q'+ i +'">'+ q.q +'</label><input id="q'+ i +'" inputmode="numeric" autocomplete="off" placeholder="?" maxlength="3"><span class="mark"></span></div><div class="msg"></div>';
+                    
+                    const inp = d.querySelector('input'), st = ans[qk(i)];
+                    if(st)inp.value = st.v;
+                    inp.addEventListener('input', () => {
+                        inp.value = inp.value.replace(/\D/g, '');
+                        grade(i, d, inp, false)
+                    });
+                    inp.addEventListener('change', () => grade(i, d, inp, true));
+                    inp.addEventListener('keydown', e => {
+                        if(e.key === 'Enter'){
+                            grade(i, d, inp, true);
+                            const nx = box.querySelectorAll('input')[i + 1];
+                            if(nx)nx.focus()
+                        }
+                    });
+                    box.appendChild(d);
+                    paint(i, d);
+                });
+                summary();
+            }
+
+            function grade(i, d, inp, force){
+                const a = String(Q[phase][i].a(N)), v = inp.value;
+                let ok = null;
+                if(v === a)ok = true;
+                else if(v !== '' && (force || v.length >= a.length)) ok = false;
+                ans[qk(i)] = {v, ok};
+                paint(i, d);
+                summary();
+            }
+
+            function paint(i, d){
+                const s = ans[qk(i)] || {}, q = Q[phase][i], m = d.querySelector('.mark');
+                d.classList.toggle('ok', s.ok === true);
+                d.classList.toggle('bad', s.ok === false);
+                m.textContent = s.ok === true ? '✔' : s.ok === false ? '✘' : '';
+                m.style.color = s.ok ? '#16a34a' : '#dc2626';
+                d.querySelector('.msg').textContent = s.ok === true ? q.ok(N) : s.ok === false ? 'Not quite. '+q.h : '';
+            }
+
+            function summary(){
+                let here = 0, all = 0, tot = 0;
+                Q[phase].forEach((q, i) => {if((ans[qk(i)] || {}).ok) here++});
+                Q.forEach((qs, p) => qs.forEach((q, i) => { tot++; if ((ans[N+'|'+p+'|'+i] || {}).ok)all++}));
+                const done = here === Q[phase].length;
+                $('#fb').className = done ? 'done' : '';
+                $('#fbm').textContent = done ? (phase < 8 ? 'Phase complete! Try '+PH[phase + 1].n+' next. 🥹' : 'All phases done! Try another chromosome number. 🥳') : here+' of '+Q[phase].length+ ' correct. Answers are checked automatically.';
+                $('#score').textContent = all + ' / '+tot;
+            }
+
+            $('#cnt').addEventListener('change', e => setN(e.target.value));
+
+            function hold(id, d){
+                const b = $(id);
+                let to, iv;
+                const stop = () => {
+                    clearTimeout(to);
+                    clearInterval(iv)
+                };
+                b.addEventListener('pointerdown', () => {
+                    setN(N + d);
+                    to = setTimeout(() => {
+                        iv = setInterval (() => setN( N + d), 110)
+                    }, 400)
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop))
+            }
+            hold('#minus', -2);
+            hold('#plus', 2);
+
+            new ResizeObserver(() => {
+                const r = cvs.parentElement.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+                W = r.width;
+                H = r.height;
+                cvs.width = W * d;
+                cvs.height = H * d;
+                ctx.setTransform(d, 0, 0, d, 0, 0);
+                R = Math.max(40, Math.min(W/3.3, H/2.25));
+            }).observe(cvs.parentElement);
+
+            function mk(x, y, L, w, wave, ang, tx, bx){
+                return{
+                    x, y, L, w, wave, ang, tx, bx
+                }
+            }
+
+            function scl(){
+                return Math.max(0.12, Math.min(1, Math.sqrt(5/P), 4.6/(P-1), 3.16/(1 + 1.05 * (P - 1))))
+            }
+
+            const hue = p => p < 5 ? HUE[p] : (p * 137.508 + 20) %360;
+
+            function sp(i, cnt, rmax, rs){
+                if(cnt <= 5) return cnt < 2 ? [0,0]: [Math.cos(6.2832 * i / cnt) * rs, Math.sin(6.2832 * i / cnt) * rs];
+                const r = rmax * Math.sqrt((i + 0.5) / cnt), a = i * 2.39996;
+                return[Math.cos(a) * r, Math.sin(a) * r];
+            }
+
+            function target(ph){
+                const cx = W/2, cy = H/2, u = R, sc = scl(), uu = u * sc, L = 0.28 * uu, q = 0.18 * L, dy = 0.55 * u, a2 = 1.1 * u, b2 = 0.52 * u;
+                const mW = Math.max(Math.max(2.2, 5 * sc), 0.035 * uu);
+                const g = Math.min(0.4 * uu, 1.6 * u / (P - 1)), g2 = Math.min(1.1 * L, (1.7 * b2 - L) / (P - 1));
+                const z = s => [s[0], s[1], s[2], s[3], 0, 0];
+
+                let c;
+                if(ph<4){
+                    const s = [[cx, cy, u, u, 1, 1], [cx, cy, u, u, 1, 0.3], [cx, cy, u, u, 1, 0], [cx, cy, 1.3 * u, 0.95 * u, 1, 0]][ph]; c = [s, z(s), z(s), z(s)]    
+                } else if(ph < 8){
+                    const nu = [1, 0.3, 0, 0][ph - 4], bb = ph == 4 ? 0.57 * u : b2, A = [cx, cy - dy, a2, bb, 1, nu], B = [cx, cy + dy, a2, bb, 1, nu]; c = [A, B, z(A), z(B)]
+                } else {
+                    const a = 0.6 * u, x = 0.56 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
+                }
+
+                const ps = a => [[cx - a, cy, 1], [cx + a, cy, 1], [cx - a, cy, 0], [cx + a, cy, 0]];
+                const p5 = al => [[cx - 0.99 * u, cy - dy, al], [cx + 0.99 * u, cy - dy, al], [cx - 0.99 * u, cy + dy, al], [cx + 0.99 * u, cy + dy, al]];
+                const pt = al => {
+                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy - b2 + 0.12 * u;
+                    return [[cx - e, yU, al], [cx + e, yU, al], [cx - e, yL, al], [cx + e, yL, al]];
+                };
+                const pl = [[0, 1, 2, 3].map(() => [cx, cy - 0.78 * u, 0]), ps(0.8 * u), ps(0.9 * u), ps(1.17 * u), p5(0), pt(1), p5(1), p5(1), p5(0)][ph];
+                const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
+                const ch = [], spa = [];
+
+                for(let i = 0; i < N; i++){
+                    const p = i >> 1, j = i & 1, s = j ? 1 : -1, a = p * 1.3 + 0.6, r = p - (P - 1) / 2;
+                    let m, v;
+                    if(ph == 0){
+                        v = sp(i, N, 0.62 * u - 0.6 * L, 0.3 * u);
+                        m = xs(cx + v[0], cy + v[1], 0.3 * uu, i * 0.9 + 0.6, 1, 0.025 * uu, 0, Math.max(Math.max(1.6, 2.5 * sc), 0.016 * uu))
+                    } else if(ph == 1){
+                        v = sp(p, P, 0.62 * u - 0.6 * L, 0.3 * u);
+                        const d = 0.1 * uu * s;
+                        m = xs(cx + v[0] + Math.cos(a) * d, cy + v[1] + Math.sin(a) * d, L, a, 0.25, 0, q, mW)
+                    } else if(ph == 2){
+                        m = xs(cx + s * 0.17 * uu, cy + r * g, L, 0, 0, 0, q, mW);
+                    } else if(ph == 3){
+                        m = xs(cx + s * 0.7 * u, cy + r * g * 0.9, L, 0, 0, 0, q, mW);
+                    } else if(ph == 4){
+                        v = sp(p, P, 0.2 * u, 0.14 * u);
+                        m = xs(cx + v[0], cy + s * dy + v[1], L, a, 0.5, 0, q, mW)
+                    } else if(ph == 5){
+                        v = sp(p, P, 0.3 * u, 0.18 * u);
+                        m = xs(cx + v[0], cy + s * dy + v[1], L, a, 0.25, 0, q, mW)
+                    } else if(ph == 6){
+                        m = xs(cx, cy + s * dy + r * g2, L, 0, 0, 0, q, mW);
+                    } else if(ph == 7){
+                        const y = cy + s * dy + r * g2;
+                        m = [mk(cx - 0.55 * u, y, L, mW, 0, 0, 0.32 * L, 0.32 * L), mk(cx + 0.55 * u, y, L, mW, 0, 0, -0.32 * L, -0.32 * L)]
+                    } else {
+                        v = sp(p, P, 0.15 * u, 0.1 * u);
+                        const Ls = 0.2 * uu, w2 = Math.max(Math.max(2, 3 * sc), 0.022 * uu);
+                        m = [0, 1].map(k => mk(cx + (k ? 0.56 : -0.56) * u + v[0], cy + s * dy + v[1], Ls, w2, 0.7, a, 0, 0))
+                    }
+                    ch.push(m);
+                    spa.push(ph == 2 || ph == 3 ? [j, j] : ph == 6 || ph == 7 ? [2 * j, 2 * j + 1] : [-1, -1]);
+                }
+                return{c, pl, sp : spa, spin : (ph == 2 || ph == 3 || ph == 6 || ph == 7) ? 1 : 0, chi : (ph == 1 || ph == 2) ? 1 : 0, ch};
+            }
+            const CK = ['x', 'y', 'tx', 'bx', 'L', 'w', 'wave', 'ang'];
+            
+
+            function cellPath(cx, cy, a, b, p){
+                ctx.beginPath();
+                for(let i = 0; i <= 90; i++){
+                    const th = i / 90 * Math.PI * 2, s = Math.sin(th), y = b* s * (1 - p* Math.pow(Math.abs(s), 8)), x = a * Math.cos(th);
+                    i ? ctx.lineTo(cx + x, cy + y) : ctx.moveTo(cx + x, cy + y);
+                }
+                ctx.closePath();
+            }
+
+            function drift(i, k){
+                const s = phase < 2 ? 1 : 0.35;
+                return[Math.sin(t * 0.9 + i * 1.7 + k * 2) * 0.012 * R * s, 
+                Math.cos(t * 0.8 + i * 2.3 + k) * 0.012 * R * s];
+            }
+
+            function chromatid(c, i, k, hl, dim){
+                const col = 'hsl(' + hue(i >> 1) + ' 80% ' + ((i & 1 ? 44 : 60) + k * 10) + '% )', [dx, dy] = drift(i, k);
+                ctx.save(); 
+                ctx.globalAlpha = dim ? 0.55 : 1;
+                ctx.translate(c.x + dx, c.y + dy);
+                ctx.rotate(c.ang);
+                const NN = 22, amp = c.wave * c.L * 0.16, ph = i * 2 + k * 1.3;
+                ctx.beginPath();
+                for(let s = 0; s <= NN; s++){
+                    const qq = s/NN; 
+                    let x, y;
+                    if(qq < 0.5){
+                        const f = qq * 2; x = lerp(c.tx, 0, f); y = lerp(-c.L / 2, 0, f)
+                    } else {
+                        const f = (qq - 0.5) * 2; x = lerp(0, c.bx, f); y = lerp(0, c.L / 2, f)
+                    }
+                    const e = Math.sin(Math.PI * qq);
+                    x += Math.sin(qq * 13 + ph + t * 2.2) * amp * e;
+                    y += Math.cos(qq * 9 + ph * 1.3 + t * 1.7) * amp * 0.6 * e;
+                    s ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+                }
+                ctx.lineCap = ctx.lineJoin = 'round';
+                if(hl){
+                    ctx.shadowColor = col;
+                    ctx.shadowBlur = 18 + 6 * Math.sin(t * 5);
+                    ctx.strokeStyle = '#111';
+                    ctx.lineWidth = c.w + 4;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0
+                }
+                ctx.strokeStyle = col;
+                ctx.lineWidth = c.w; 
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, c.w * 0.7, 0, 7);
+                ctx.fillStyle = '#fde68a';
+                ctx.fill();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#92400e';
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function label(c, i, rad){
+                const [dx, dy] = drift(i, 0), txt = 'Pair ' + ((i >> 1) + 1) +' \u00b7 homologue '+((i & 1) + 1);
+                ctx.save();
+                ctx.font = '700 12px system-ui, sans-serif';
+                const pw = ctx.measureText(txt).width + 16;
+                const x = Math.max(pw / 2 + 4, Math.min(W - pw / 2 - 4, c.x + dx)), y = Math.max(16, c.y + dy - rad - 12);
+                ctx.fillStyle = 'hsl('+ hue(i >> 1) +' 80% 72%)';
+                ctx.beginPath();
+                ctx.roundRect(x - pw / 2, y - 11, pw, 22, 11);
+                ctx.fill();
+                ctx.fillStyle = '#0b1020';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(txt, x, y + 0.5);
+                ctx.restore(); 
+            }
+
+            function draw(){
+                const cs = getComputedStyle(document.documentElement), g = v => cs.getPropertyValue(v).trim();
+                const u = R, S = cur;
+                ctx.clearRect(0, 0, W, H);
+
+                [0, 1].forEach(pass => S.c.forEach(([x, y, a, b, al]) => {
+                    if(al < 0.02) return;
+                    ctx.globalAlpha = al; 
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, Math.max(1, a), Math.max(1, b), 0, 0, 7);
+                    if(pass == 0){
+                        ctx.lineWidth = 6;
+                        ctx.strokeStyle = g('--cellline');
+                        ctx.stroke();
+                    } else {
+                        ctx.fillStyle = g('--cell');
+                        ctx.fill();
+                    }
+                }));
+
+                ctx.setLineDash([7, 5]);
+                ctx.lineDashOffset = -t * 6;
+                S.c.forEach(([x, y, a, b, al, nu]) => {
+                    const k = al * nu;
+                    if(k < 0.02) return;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 0.62 * Math.min(a, b), 0, 7);
+                    ctx.globalAlpha = k * 0.1;
+                    ctx.fillStyle = g('--nuc');
+                    ctx.fill();
+                    ctx.globalAlpha = k;
+                    ctx.strokeStyle = g('--nuc');
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+                });
+                ctx.globalAlpha = 1;
+                ctx.setLineDash([]);
+
+            
+                if(S.spin > 0.02){
+                    ctx.save();
+                    ctx.globalAlpha = S.spin * Math.max(0.12, Math.min(0.45, 4 / N));
+                    ctx.strokeStyle = g('--fg');
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([5, 4]);
+                    ctx.lineDashOffset = -t * 22;
+                    S.ch.forEach((pr, i) => pr.forEach((c, k) => {
+                        const qi = S.sp[i][k];
+                        if(qi < 0) return;
+                        const [dx, dy] = drift(i, k), pp = S.pl[qi];
+                        ctx.beginPath();
+                        ctx.moveTo(pp[0], pp[1]);
+                        ctx.lineTo(c.x + dx, c.y + dy);
+                        ctx.stroke();
+                    }));
+                    ctx.restore();
+                }
+
+                const pu = 1 + 0.15 * Math.sin(t * 4);
+                S.pl.forEach(([x, y, al]) => {
+                    if(al < 0.02) return;
+                    ctx.save();
+                    ctx.globalAlpha = al;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 0.05 * u * pu, 0, 7);
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.shadowColor = '#fbbf24';
+                    ctx.shadowBlur = 12;
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                const order = [...S.ch.keys()].filter(i => i !== sel).concat(sel);
+                order.forEach(i => S.ch[i].forEach((c, k) => chromatid(c, i, k, i === sel, i !== sel)));
+
+                if(S.chi > 0.02){
+                    ctx.save();
+                    ctx.globalAlpha = S.chi;
+                    ctx.strokeStyle = '#111';
+                    ctx.lineWidth = 1.8;
+                    for(let p = 0; p < P; p++){
+                        const a  = S.ch[2*p][0], b = S.ch[2 * p + 1] && S.ch[2 * p + 1][0];
+                        if(!b) continue;
+                        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, r = Math.max(3, 0.04 * u * scl());
+                        ctx.beginPath();
+                        ctx.moveTo(mx - r, my - r);
+                        ctx.lineTo(mx + r, my + r);
+                        ctx.moveTo(mx + r, my - r);
+                        ctx.lineTo(mx - r, my + r);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+                const pr = S.ch[sel], sep = Math.hypot(pr[0].x - pr[1].x, pr[0].y - pr[1].y) > 0.3 * u;
+                (sep ? pr : [pr[0]]).forEach(c => {
+                    const [dx, dy] = drift(sel, 0), r = Math.max(0.22 * u * scl(), 14) + Math.sin(t * 4) * 3;
+                    ctx.save();
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineDashOffset = -t * 18;
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = 'hsl('+hue(sel >> 1)+' 90% 45%)';
+                    ctx.beginPath();
+                    ctx.arc(c.x + dx, c.y + dy, r, 0, 7);
+                    ctx.stroke();
+                    ctx.restore();
+                    label(c, sel, r);
+                });
+            }
+
+            function frame(now){
+                const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+                if(W){
+                    const T = target(phase), f = 1 - Math.exp(-dt * 3.5);
+                    if(!cur)cur = JSON.parse(JSON.stringify(T));
+                    else {
+                        while(cur.ch.length > N)cur.ch.pop(); 
+                        while(cur.ch.length < N)cur.ch.push(JSON.parse(JSON.stringify(T.ch[cur.ch.length])));
+                        cur.sp = T.sp;
+                        ['spin', 'chi'].forEach(k => cur[k] = lerp(cur[k], T[k], f));
+                        ['c', 'pl'].forEach(k => cur[k].forEach((s, i) => s.forEach((v, m) => s[m] = lerp(v, T[k][i][m], f))))
+                        cur.ch.forEach((pr, i) => pr.forEach((c, k) => CK.forEach(qq => c[qq] = lerp(c[qq], T.ch[i][k][qq], f))));
+                    }
+                    draw();
+                }
+                requestAnimationFrame(frame);
+            }
+
+            function hit(e){
+                if(!cur)return -1;
+                const r = cvs.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+                let best = -1, bd = Math.max(0.25 * R * scl(), 16);
+                cur.ch.forEach((pr, i) => pr.forEach(c => {
+                    const d = Math.hypot(mx - c.x, my - c.y);
+                    if(d < bd){
+                        bd = d; best = i
+                    }
+                }));
+                return best;
+            }
+
+            cvs.addEventListener('pointerdown', e => {
+                const i = hit(e);
+                if(i >= 0)sel = i
+            });
+
+            cvs.addEventListener('pointermove', e => {
+                cvs.style.cursor = hit(e) >= 0 ? 'pointer' : 'default'
+            });
+
+            setN(10);
+            setPhase(0);
+            requestAnimationFrame(frame);
+
+        </script>
+    </body>
+</html>
