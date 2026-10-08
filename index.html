@@ -501,7 +501,7 @@
                     }   
                 } else if(ph < 8){
                     const nu = [1, 0.3, 0, 0][ph - 4], rc = b2; 
-                    const A = ph == 4 ? [cx - dy, rc, rc, 1, nu]: [cx, cy - dy, rc, rc, 1, nu], B = ph == 4 ? [cx + dy, cy, rc, rc, 1, nu] : [cx, cy + dy, rc, rc, 1, nu];
+                    const A = ph == 4 ? [cx - dy, cy, rc, rc, 1, nu]: [cx, cy - dy, rc, rc, 1, nu], B = ph == 4 ? [cx + dy, cy, rc, rc, 1, nu] : [cx, cy + dy, rc, rc, 1, nu];
                     if(ph < 7){
                         c = [A, B, z(A), z(B)];
                     } else {
