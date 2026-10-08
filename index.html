@@ -634,7 +634,7 @@
                 ctx.restore();
             }
 
-            function threadW(){
+            function threadLW(){
                 return Math.max(1.5, 0.02 * R * Math.min(1, 2 / Math.sqrt(P)));
             }
 
@@ -656,7 +656,7 @@
             }
 
             function thread(c, i, hl, dim){
-                const col = 'hsl(' + hue(i >> 1) +' %80 ' + (i & 1 ? 44 : 60) + '% )';
+                const col = 'hsl(' + hue(i >> 1) +' %80 ' + (i & 1 ? 44 : 60) + '%)';
                 const pts = threadPts(c, i), lw = threadLW();
                 ctx.save();
                 ctx.globalAlpha = thr * (dim ? 0.55 : 0.95);
@@ -837,7 +837,7 @@
             function segDist(px, py, a, b){
                 const vx = b[0] - a[0], vy = b[1] - a [1], l2 = vx * vx + vy * vy;
                 let k = l2 ? ((px - a[0]) * vx + (py - a[1]) * vy) / l2 : 0;
-                k.Math.max(0, Math.min(1, k));
+                k = Math.max(0, Math.min(1, k));
                 return Math.hypot(px - (a[0] + k * vx), py - (a[1] + k * vy));
             }
 
