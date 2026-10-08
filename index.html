@@ -578,7 +578,7 @@
             }
 
             function chromatid(c, i, k, hl, dim){
-                const col = (ii, kk) => 'hsl(' + hue(ii >> 1) + ' 80% ' + ((ii & 1 ? 36 : 66) + kk * 6) + '% )', col = colOf(i, k), [dx, dy] = drift(i, k);
+                const colOf = (ii, kk) => 'hsl(' + hue(ii >> 1) + ' 80% ' + ((ii & 1 ? 36 : 66) + kk * 6) + '% )', col = colOf(i, k), [dx, dy] = drift(i, k);
                 ctx.save(); 
                 ctx.globalAlpha = dim ? 0.55 : 1;
                 ctx.translate(c.x + dx, c.y + dy);
