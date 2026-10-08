@@ -614,8 +614,12 @@
                 if(phase >= 2 && (i ^ 1) < N){
                     const top = (i & 1) ? k == 1 : k == 0, a0 = top ? 0 : 15, a1 = top ? 7 : 22;
                     ctx.beginPath();
-                    for(let s = a0; s <= a1; s++);
+                    for(let s = a0; s <= a1; s++) s == a0 ? ctx.moveTo(pts[s][0], pts[s][1]) : ctx.lineTo(pts[s][0], pts[s][1]); 
+                    ctx.strokeStyle = colOf(i ^ 1, 1 - k);
+                    ctx.lineWidth = c.w;
+                    ctx.stroke();
                 }
+                ctx.arc(0, 0, c.w * 0.7, 0, 7);
                 ctx.fillStyle = '#fde68a';
                 ctx.fill();
                 ctx.lineWidth = 1.5;
