@@ -518,7 +518,7 @@
                     const e = 0.15 * u, xL = cx - dy - b2 + 0.12 * u, xR = cx + dy + b2 - 0.12 * u;
                     return [[xL, cy - e, al], [xR, cy - e, al], [xL, cy + e, al], [xR, cy + e, al]];
                 };
-                const p0 = [[cx - 0.78 * u, cy - 0.07 * u, 1], [cx - 0.78 * u, cy + 0.07 * u, 1], [cx - 0.78 * u, cy - 0.07 * u, 0], [cx - 0.78 * u, cy + 0.07 * u, 0]];
+                const p0 = [[cx - 0.07 * u, cy - 0.78 * u, 1], [cx + 0.07 * u, cy - 0.78 * u, 1], [cx - 0.07 * u, cy - 0.78 * u, 0], [cx + 0.07 * u, cy - 0.78 * u, 0]];
                 const pl = [p0, ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), pt(1), p5(1, 0.4 * u), p5(1, 0.4 * u), p5(1, 0.8 * u), p5(1, 0.98 * u), p5(0, 0.6 * u)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
