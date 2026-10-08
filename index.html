@@ -497,11 +497,11 @@
                     if(ph < 3){
                         const s = [[cx, cy, u, u, 1, 1], [cx, cy, u, u, 1, 0.3], [cx, cy, u, u, 1, 0]][ph]; c = [s, z(s), z(s), z(s)]    
                     } else {
-                        const A = [cx, cy - 0.42 * u, u, 0.7 * u, 1, 0], B = [cx, cy + 0.42 * u, u, 0.7 * u, 1, 0]; c = [A, B, z(A), z(B)]
+                        const A = [cx - 0.42 * u, cy, 0.7 * u, u, 1, 0], B = [cx + 0.42 * u, cy, 0.7 * u, u, 1, 0]; c = [A, B, z(A), z(B)]
                     }   
                 } else if(ph < 8){
                     const nu = [1, 0.3, 0, 0][ph - 4], rc = b2; 
-                    const A = [cx, cy - dy, rc, rc, 1, nu], B = [cx, cy + dy, rc, rc, 1, nu];
+                    const A = ph == 4 ? [cx - dy, rc, rc, 1, nu]: [cx, cy - dy, rc, rc, 1, nu], B = ph == 4 ? [cx + dy, cy, rc, rc, 1, nu] : [cx, cy + dy, cy, rc, rc, 1, nu];
                     if(ph < 7){
                         c = [A, B, z(A), z(B)];
                     } else {
@@ -512,13 +512,13 @@
                     const a = 0.5 * u, x = 0.6 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
                 }
 
-                const ps = a => [[cx, cy - a, 1], [cx, cy + a, 1], [cx, cy - a, 0], [cx, cy + a, 0]];
+                const ps = a => [[cx - a, cy, 1], [cx + a, cy, 1], [cx - a, cy, 0], [cx  + a, cy, 0]];
                 const p5 = (al, d) => [[cx - d, cy - dy, al], [cx - d, cy + dy, al], [cx + d, cy - dy, al], [cx + d, cy + dy, al]];
                 const pt = al => {
-                    const e = 0.15 * u, yU = cy - dy - b2 + 0.12 * u, yL = cy + dy + b2 - 0.12 * u;
-                    return [[cx - e, yU, al], [cx - e, yL, al], [cx + e, yU, al], [cx + e, yL, al]];
+                    const e = 0.15 * u, xL = cx - dy - b2 + 0.12 * u, xR = cx + dy + b2 - 0.12 * u;
+                    return [[xL, cy - e, al], [xR, cy - e, al], [xL, cy + e, al], [xR, cx + e, al]];
                 };
-                const p0 = [[cx - 0.07 * u, cy - 0.78 * u, 1], [cx + 0.07 * u, cy - 0.78 * u, 1], [cx - 0.07 * u, cy - 0.78 * u, 0], [cx + 0.07 * u, cy - 0.78 * u, 0]];
+                const p0 = [[cx - 0.78 * u, cy - 0.07 * u, 1], [cx - 0.78 * u, cy + 0.07 * u, 1], [cx - 0.78 * u, cy - 0.07 * u, 0], [cx - 0.78 * u, cy - 0.07 * u, 0]];
                 const pl = [p0, ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), pt(1), p5(1, 0.4 * u), p5(1, 0.4 * u), p5(1, 0.8 * u), p5(1, 0.98 * u), p5(0, 0.6 * u)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
@@ -534,9 +534,9 @@
                         const d = 0.1 * uu * s;
                         m = xs(cx + v[0] + Math.cos(a) * d, cy + v[1] + Math.sin(a) * d, L, a, 0.25, 0, q, mW)
                     } else if(ph == 2){
-                        m = xs(cx + r * g, cy + s * 0.17 * uu, L, 0, 0, 0, q, mW);
+                        m = xs(cx + r * g, cy + s * 0.17 * uu, cy + r * g, L, 0, 0, 0, q, mW);
                     } else if(ph == 3){
-                        m = xs(cx + r * g * 0.9, cy + s * 0.62 * u, L, 0, 0, 0, q, mW);
+                        m = xs(cx + s * 0.62 * u, cy + r * g * 0.9, L, 0, 0, 0, q, mW);
                     } else if(ph == 4){
                         v = sp(p, P, 0.2 * u, 0.14 * u);
                         m = xs(cx + v[0], cy + s * dy + v[1], L, a, 0.5, 0, q, mW)
