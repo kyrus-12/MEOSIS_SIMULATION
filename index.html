@@ -648,8 +648,8 @@
                 for(let n = 0; n <= NN; n++){
                     const q = q0 + THREAD_LEN * n / NN;
                     pts.push([
-                        ox + A1 * Math.sin(f1 * TP * q * i * 1.9 + 0.5 + t * 0.25) + A2 * Math.sin(f2 * TP * q * i * 2.7 + 1.1 + t * 0.2) + A3 * Math.sin(f3 * TP * q * i * 3.3 + 2+ t * 0.8),
-                        oy + A1 * Math.sin(g1 * TP * q * i * 1.3 + 0.2 + t * 0.22) + A2 * Math.sin(g2 * TP * q * i * 2.1 + 0.9 + t * 0.18) + A3 * Math.sin(g3 * TP * q * i * 0.7 + 1.7 + t * 0.7)
+                        ox + A1 * Math.sin(f1 * TP * q + i * 1.9 + 0.5 + t * 0.25) + A2 * Math.sin(f2 * TP * q + i * 2.7 + 1.1 - t * 0.2) + A3 * Math.sin(f3 * TP * q + i * 3.3 + 2 + t * 0.8),
+                        oy + A1 * Math.sin(g1 * TP * q + i * 1.3 + 0.2 - t * 0.22) + A2 * Math.sin(g2 * TP * q + i * 2.1 + 0.9 + t * 0.18) + A3 * Math.sin(g3 * TP * q + i * 0.7 + 1.7 - t * 0.7)
                     ]);
                 } 
                 return pts;
