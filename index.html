@@ -610,7 +610,6 @@
                 ctx.strokeStyle = col;
                 ctx.lineWidth = c.w; 
                 ctx.stroke();
-                ctx.beginPath();
                 if(phase >= 1 && (i ^ 1) < N){
                     const top = (i & 1) ? k == 1 : k == 0, a0 = top ? 0 : 15, a1 = top ? 7 : 22;
                     ctx.beginPath();
@@ -619,6 +618,8 @@
                     ctx.lineWidth = c.w;
                     ctx.stroke();
                 }
+                ctx.beginPath();
+                ctx.arc(0, 0, c.w * 0.7, 0, 7);
                 ctx.fillStyle = '#fde68a';
                 ctx.fill();
                 ctx.lineWidth = 1.5;
