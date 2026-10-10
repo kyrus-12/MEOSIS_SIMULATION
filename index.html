@@ -499,6 +499,12 @@
             stroke-dasharray:100;
             animation:draw 2s ease-out infinite;
         }
+        .board.playing .grip.ph1 .co{
+            animation:xover 2.4s ease-in-out infinite alternate;
+        }
+        @keyframes xover{
+            from{opacity:0;} to {opacity:1;}
+        }
         @keyframes tug{
             from{ transform:translateX(-3px)} to {transform:translateX(3px)}
         }
@@ -1361,13 +1367,7 @@
                 const sp = (m, k) => [Math.cos(m * 2.4) * R * k * Math.sqrt((m + 0.5) / (m + 3)), Math.sin(m * 2.4) * R * k * Math.sqrt((m + 0.5) / (m + 3))], sd = j % 2 ? 1 : -1, st = (((j >> 1) % 5) - 2) * 30;
                 if(t === 'nuc'){
                     let dx = 0, dy = 0;
-                    if(ph === 4 && j < 2) dy = sd * R * 0.5;
-                    else if(ph === 8 && j < 2) dx = sd * R * 0.5;
-                    else if(j){
-                        dx = Math.cos(j * 2.4) * R * 0.5; 
-                        dy = Math.sin(j * 2.4) * R * 0.5;
-                    }
-                    Lp.push({t, x : c.x + dx, y : c.y + dy});
+                    Lp.push({t, x : c.x + sd * R *((ph === 4 || ph ===8) ? 0.55 : 0.8), y : c.y + st});
                 } else if(t === 'cen'){
                     if(ph === 4) Lp.push({t, x : c.x + st * R * 0.8});
                    else Lp.push({t, x : c.x + sd * R * (ph === 8 ? 0.55 : 0.8), y : c.y + st});
@@ -1381,7 +1381,7 @@
                     } 
                     else if(ph === 2) Lp.push({t, x : c.x + sx - 16, y : yy}, {t, x : c.x + sx + 16, y : yy});
                     else if(ph === 3) Lp.push({t, x : c.x - 0.5 * R + sx * 0.4, y : yy}, {t, x : c.x + 0.5 * R - sx * 0.4, y : yy});
-                    else if(ph === 4) Lp.push({t, x : c.x + (row - (per - 1) / 2) * 34, y : c.y - 0.5 * R + col * 26}, {t, x : c.x + (row - (per - 1) / 2) * 34, y : c.y + 0.5 * R - col * 26});
+                    else if(ph === 4) Lp.push({t, x : c.x - 0.5 * R + col * 26, y : c.y + (row - (per - 1) / 2) * 34}, {t, x : c.x + 0.5 * R - col * 26, y : c.y + (row - (per - 1) / 2) * 34});
                     else if(ph === 5) {const [a, b] = sp(m, 0.6); Lp.push({t, x : c.x + a, y : c.y + b})}
                     else if(ph === 6) Lp.push({t, x : c.x + sx, y : yy});
                     else{
@@ -1589,7 +1589,7 @@
                 }
                 const tt = ((performance.now() - ct0) / 7000) % 1;
                 const q = seg(tt, 0.1, 0.55) * (1 - seg(tt, 0.94, 1)), m = seg(tt, 0.55, 0.75) * (1 - seg(tt, 0.88, 0.94));
-                const ax = phase === 4 ? 'y' : 'x', st = 'style="fill:var(--cell); stroke:var(--cellline); stroke-width:4; stroke-linejoin:round;"';
+                const ax = 'x', st = 'style="fill:var(--cell); stroke:var(--cellline); stroke-width:4; stroke-linejoin:round;"';
                 let h = '';
                 const vw = view();
                 cells.forEach(e => {
@@ -1721,6 +1721,8 @@
                 const dot = (x, y) => '<circle class="cm" cx="' + x + '" cy="' + y + '" r="4.5" fill="#fde86a" stroke="#92400e" stroke-width="1.5"/>';
                 const X = p('M12 12L28 48', a, 8) + p('M20 30L28 48', x, 8) + p('M28 12L12 48', b, 8) + p('M20 30L12 48', x, 8) + dot(20, 30);
                 const coil = p('M11 6Q19 30 29 54', a, 6) + p('M19.5 30Q24 42 29 54', x, 6) + p('M29 6Q21 30 11 54', b, 6);
+                const hc = 'hsl(' + h + ' 85% ' + ((k & 1) ? 60 : 44) + '%)', t = (d, w) => p(d, hc, w, 'class="co"');
+                const tc = t('M11 6Q13 12 15.1 18', 6) + t('M29 6Q27 12 24.9 18', 6), tX = ('M12 12L15.2 19.3', 8) + t('M28 12L24.3 19.3', 8);
                 return [
                     (() => {
                         const sh = shapes[k] || (shapes[k] = initShape(k + 1)), dk = 'hsl(' + h + ' 70% 38%)';
@@ -1730,10 +1732,10 @@
                         }).join('');
                         return p(smoothD(sh.a), a, 2.4, 'data-st="a"') + p(smoothD(sh.b), b, 2.4, 'class="rep"  pathLength="100" data-st="b"') + hs('b', b) + hs('a', a);
                     })(),
-                    coil + p('M18.7 34.8Q15 44.4 11 54', x, 6, 'class="xo"') + dot(20, 30), X, X, X,
-                    coil + p('M18.7 34.8Q15 44.4 11 54', x, 6) + dot(20, 30), X,
-                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + dot(28, 30) : p('M30, 10L12, 30L30, 50', b, 7) + dot(12, 30),
-                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C10 40 10 46 20 56', x, 4) + dot(20, 30)
+                    coil + p('M18.7 34.8Q15 44.4 11 54', x, 6, 'class="xo"') + tc + dot(20, 30), X, X, X,
+                    coil + p('M18.7 34.8Q15 44.4 11 54', x, 6) + tc + dot(20, 30), X,
+                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + tc + dot(28, 30) : p('M30, 10L12, 30L30, 50', b, 7) + tc + dot(12, 30),
+                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + tc + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C10 40 10 46 20 56', x, 4) + tc + dot(20, 30)
                 ][ph];
             }
 
