@@ -483,6 +483,18 @@
         .board.playing .grip.ph4{
             animation:wig 2.6s ease-in-out infinite;
         }
+        .board.playing .grip.ph5{
+            animation:cond 1.4s ease-in-out infinite alternate;
+        }
+        .board.playing .mv.ph6{
+            animation:tug 0.5s ease-in-out infinite alternate;
+        }
+        .board.playing .grip.ph7{
+            animation:pull 2.4s ease-in-out infinite alternate;
+        }
+        .board.playing .grip.ph8{
+            animation:wig 2.6s ease-in-out infinite;
+        }
         .board.playing .grip.ph0 .rep{
             stroke-dasharray:100;
             animation:draw 2s ease-out infinite;
@@ -528,8 +540,12 @@
         .board.playing.p1 .el.nuc{
             animation:dissolve 2.4s ease-in-out infinite alternate;
         }
-        .board.playing.p4 .el.nuc{
+        .board.playing.p4 .el.nuc,
+        .board.playing.p8 .el.nuc{
             animation:form 2.4s ease-in-out infinite alternate;
+        }
+        .board.playing.p5 .el.nuc{
+            animation:dissolve 2.4s ease-in-out infinite alternate;
         }
         @keyframes dissolve{
             from{opacity:1} to {opacity:0.15}
@@ -1350,7 +1366,7 @@
                         dx = Math.cos(j * 2.4) * R * 0.5; 
                         dy = Math.sin(j * 2.4) * R * 0.5;
                     }
-                    Lp.push({t, x : c.x + dx, y : c.y + dy});
+                    L.push({t, x : c.x + dx, y : c.y + dy});
                 } else if(t === 'cen'){
                     if(ph === 4) L.push({t, x : c.x + st * R * 0.8});
                    else L.push({t, x : c.x + sd * R * (ph === 8 ? 0.55 : 0.8), y : c.y + st});
@@ -1377,6 +1393,7 @@
 
             function setB(t, v){
                 v = Math.max(0, Math.min(CAP, v));
+                if(t === 'chr' && phase <= 4) v = v > cnt('chr') ? Math.ceil(v / 2) * 2 : Math.floor(v / 2) * 2;
                 const rm = tt => {
                     for(let k = PB[phase].length - 1; k >= 0; k--) if(PB[phase][k].t === tt){
                         PB[phase].splice(k, 1);
