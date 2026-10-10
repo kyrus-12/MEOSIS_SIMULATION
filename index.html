@@ -526,17 +526,6 @@
         @keyframes glow{
             from{ box-shadow:0 0 4px #fbbf24;} to {box-shadow:0 0 16px 4px #fbbf24}
         }
-        .board.playing .el.nuc::after{
-            content:'';
-            position:absolute;
-            inset:-4px;
-            border:2px dashed var(--nuc);
-            border-radius:50%;
-            animation:ring 1.8s ease-out infinite;
-        }
-        @keyframes ring{
-            from{transform:scale(1); opacity:0.8} to {transform:scale(1.25); opacity:0}
-        }
         .board.playing.p1 .el.nuc{
             animation:dissolve 2.4s ease-in-out infinite alternate;
         }
@@ -1531,7 +1520,7 @@
             const clamp01 = x => Math.max(0, Math.min(1, x)), ease = x => x * x * (3 - 2 * x), seg = (a, b, c) => ease(clamp01((a - b) / (c - b)));
 
             function cleaveOn(){
-                return build && bp && (phase === 4 || phase === 8) && cnt('cell') > 0;
+                return build && bp && (phase === 3 || phase === 4 || phase === 7 || phase === 8) && cnt('cell') > 0;
             }
 
             function cleaveLoop(){
@@ -1539,7 +1528,7 @@
                     drawCleave();
                     requestAnimationFrame(cleaveLoop);
                 } else {
-                    cl = false;
+                    cl = false, ct0 = 0; cph = -1;
                     $('#cleave').innerHTML = '';
                 }
             }
@@ -1583,13 +1572,14 @@
                     c.innerHTML = '';
                     return;
                 }
-                if(!cl){
+                if(!cl || cph !== phase){
+                    if(!cl) requestAnimationFrame(cleaveLoop);
                     cl = true;
-                    ct0 = performance.now();
-                    requestAnimationFrame(cleaveLoop);
+                    cph = phase;
+                    ct0 = performance.now();  
                 }
-                const tt = ((performance.now() - ct0) / 7000) % 1;
-                const q = seg(tt, 0.1, 0.55) * (1 - seg(tt, 0.94, 1)), m = seg(tt, 0.55, 0.75) * (1 - seg(tt, 0.88, 0.94));
+                const tt = Math.min(1, (performance.now() - ct0) / 7000), ana = phase === 3 || phase === 7;
+                const q = ana ? seg(tt, 0.1, 0.9) : seg(tt, 0.1, 0.55), m = ana ? 0 : seg(tt, 0.55, 0.75);
                 const ax = 'x', st = 'style="fill:var(--cell); stroke:var(--cellline); stroke-width:4; stroke-linejoin:round;"';
                 let h = '';
                 const vw = view();
