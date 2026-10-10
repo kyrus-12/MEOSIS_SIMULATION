@@ -1597,7 +1597,7 @@
                 cells.forEach(e => {
                     const v = e.vis, cx = v.cx, cy = v.cy, rr = Math.max(v.w, v.h) * 0.75;
                     if(cx + rr < vw.x0 || cx - rr > vw.x1 || cy + rr < vw.y0 || cy - rr > vw.y1) return;
-                    h += cleavePath(cx, cy, (ax === 'x' ? v. w : v.h) / 2-2, (ax === 'x' ? v.h : v.w) / 2-2, q, m, ax, st, phase === 8);
+                    h += cleavePath(cx, cy, (ax === 'x' ? v. w : v.h) / 2-2, (ax === 'x' ? v.h : v.w) / 2-2, q, m, ax, st, true);
                 });
                 c.innerHTML = h;
             }
