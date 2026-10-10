@@ -1175,7 +1175,7 @@
                     ctx.strokeStyle = g('--fg');
                     ctx.lineWidth = 1.2;
                     ctx.setLineDash([5, 4]);
-                    ctx.lineDashOffset = -t * 22;
+                    ctx.lineDashOffset = t * 22;
                     S.ch.forEach((pr, i) => pr.forEach((c, k) => {
                         const qi = S.sp[i][k];
                         if(qi < 0) return;
