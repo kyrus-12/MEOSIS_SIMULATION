@@ -1366,26 +1366,26 @@
                         dx = Math.cos(j * 2.4) * R * 0.5; 
                         dy = Math.sin(j * 2.4) * R * 0.5;
                     }
-                    L.push({t, x : c.x + dx, y : c.y + dy});
+                    Lp.push({t, x : c.x + dx, y : c.y + dy});
                 } else if(t === 'cen'){
-                    if(ph === 4) L.push({t, x : c.x + st * R * 0.8});
-                   else L.push({t, x : c.x + sd * R * (ph === 8 ? 0.55 : 0.8), y : c.y + st});
+                    if(ph === 4) Lp.push({t, x : c.x + st * R * 0.8});
+                   else Lp.push({t, x : c.x + sd * R * (ph === 8 ? 0.55 : 0.8), y : c.y + st});
                 }
                 else {
                     const pair = ph <=  4, m = pair ? j >> 1 : j, per = Math.max(1, Math.floor(R * 1.5 / 34)), col = Math.floor(m / per), row = m % per;
                     const sx = (col % 2 ? 1 : -1) * Math.ceil(col / 2) * (pair ? 64 : 26), yy = c.y + (row - (per - 1) / 2) * 34;
                     if(ph <= 1){
                         const [a, b] = sp(m, 0.6), h = ph ? 10 : 42;
-                        L.push({t, x : c.x + a - h, y : c.y + b}, {t, x : c.x + a + h, y : c.y + b});
+                        Lp.push({t, x : c.x + a - h, y : c.y + b}, {t, x : c.x + a + h, y : c.y + b});
                     } 
-                    else if(ph === 2) L.push({t, x : c.x + sx - 16, y : yy}, {t, x : c.x + sx + 16, y : yy});
-                    else if(ph === 3) L.push({t, x : c.x - 0.5 * R + sx * 0.4, y : yy}, {t, x : c.x + 0.5 * R - sx * 0.4, y : yy});
-                    else if(ph === 4) L.push({t, x : c.x + (row - (per - 1) / 2) * 34, y : c.y - 0.5 * R + col * 26}, {t, x : c.x + (row - (per - 1) / 2) * 34, y : c.y + 0.5 * R - col * 26});
+                    else if(ph === 2) Lp.push({t, x : c.x + sx - 16, y : yy}, {t, x : c.x + sx + 16, y : yy});
+                    else if(ph === 3) Lp.push({t, x : c.x - 0.5 * R + sx * 0.4, y : yy}, {t, x : c.x + 0.5 * R - sx * 0.4, y : yy});
+                    else if(ph === 4) Lp.push({t, x : c.x + (row - (per - 1) / 2) * 34, y : c.y - 0.5 * R + col * 26}, {t, x : c.x + (row - (per - 1) / 2) * 34, y : c.y + 0.5 * R - col * 26});
                     else if(ph === 5) {const [a, b] = sp(m, 0.6); L.push({t, x : c.x + a, y : c.y + b})}
-                    else if(ph === 6) L.push({t, x : c.x + sx, y : yy});
+                    else if(ph === 6) Lp.push({t, x : c.x + sx, y : yy});
                     else{
                         const off = (ph === 7 ? 0.2 : 0.5) * R;
-                        L.push({t, side : 0, x : c.x - off + sx, y : yy}, {t, side : 1, x : c.x + off + sx, y : yy})
+                        Lp.push({t, side : 0, x : c.x - off + sx, y : yy}, {t, side : 1, x : c.x + off + sx, y : yy})
                     }
 
                 }
