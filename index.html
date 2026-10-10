@@ -531,7 +531,12 @@
         }
         .board.playing.p4 .el.nuc,
         .board.playing.p8 .el.nuc{
-            animation:form 2.4s ease-in-out infinite alternate;
+            animation:form 2.4s ease-out forwards;
+        }
+        .board.playing.p4 .el.nuc,
+        .board.playing.p8 .el.nuc{
+            animation:none;
+            display:none;
         }
         .board.playing.p5 .el.nuc{
             animation:dissolve 2.4s ease-in-out infinite alternate;
