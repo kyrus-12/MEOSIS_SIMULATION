@@ -1045,12 +1045,14 @@
                 ctx.lineWidth = c.w; 
                 ctx.stroke();
                 if(phase >= 1 && (i ^ 1) < N){
-                    const top = (i & 1) ? k == 1 : k == 0, a0 = top ? 0 : 15, a1 = top ? 7 : 22;
-                    ctx.beginPath();
-                    for(let s = a0; s <= a1; s++) s == a0 ? ctx.moveTo(pts[s][0], pts[s][1]) : ctx.lineTo(pts[s][0], pts[s][1]); 
-                    ctx.strokeStyle = colOf(i ^ 1, 1 - k);
-                    ctx.lineWidth = c.w;
-                    ctx.stroke();
+                    const crossed = (i & 1) ? k == 1 : k == 0; 
+                    if(crossed){
+                        ctx.beginPath();
+                        for(let s = 0; s <= 7; s++) s == a0 ? ctx.moveTo(pts[s][0], pts[s][1]) : ctx.lineTo(pts[s][0], pts[s][1]); 
+                         ctx.strokeStyle = colOf(i ^ 1, 1 - k);
+                         ctx.lineWidth = c.w;
+                         ctx.stroke();
+                    }
                 }
                 ctx.beginPath();
                 ctx.arc(0, 0, c.w * 0.7, 0, 7);
@@ -1107,7 +1109,7 @@
                     const o = 0.02 * R, n2 = Math.max(2, Math.round(rp * pts.length));ctx.globalAlpha = thr * (dim ? 0.55 : 0.95) * fd;
                     ctx.beginPath();
                     pts.slice(0, n2).forEach((pt, s) => s ? ctx.lineTo(pt[0] + o, pt[1] + o) : ctx.moveTo(pt[0] + o, pt[1] + o));
-                    ctx.strokeStyle = 'hsl(' + hue(i) + ' 85% 70%)';
+                    ctx.strokeStyle = 'hsl(' + hue(i >> 1) + ' 85% 70%)';
                     ctx.stroke();
                 }
                 ctx.restore();
@@ -1734,8 +1736,8 @@
                     })(),
                     coil + p('M18.7 34.8Q15 44.4 11 54', x, 6, 'class="xo"') + dot(20, 30), X, X, X,
                     coil + p('M18.7 34.8Q15 44.4 11 54', x, 6) + dot(20, 30), X,
-                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + dot(28, 30) : p('M30, 10L12, 30L30, 50', b, 7) + dot(12, 30),
-                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C10 40 10 46 20 56', x, 4) + dot(20, 30)
+                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + dot(28, 30) : p('M30, 10L12, 30L30, 50', b, 7) + p('M10, 10L12, 30L30, 50', x, 7) + dot(12, 30),
+                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C10 40 10 46 20 56', b, 4) + dot(20, 30)
                 ][ph];
             }
 
