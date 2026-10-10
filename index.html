@@ -1101,7 +1101,7 @@
                     const o = 0.02 * R, n2 = Math.max(2, Math.round(rp * pts.length));ctx.globalAlpha = thr * (dim ? 0.55 : 0.95) * fd;
                     ctx.beginPath();
                     pts.slice(0, n2).forEach((pt, s) => s ? ctx.lineTo(pt[0] + o, pt[1] + o) : ctx.moveTo(pt[0] + o, pt[1] + o));
-                    ctx.strokeStyle = 'hsl(' + hue(i >> 1) + ' 85% 70%)';
+                    ctx.strokeStyle = col;
                     ctx.stroke();
                 }
                 ctx.restore();
