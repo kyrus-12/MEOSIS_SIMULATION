@@ -1102,6 +1102,14 @@
                 ctx.strokeStyle = col;
                 ctx.lineWidth = lw;
                 ctx.stroke();
+                const cyc = ((t + i * 0.7) % 10) / 10, rp = clamp01((cyc - 0.1) / 0.55), fd = cyc > 0.9 ? (1 - cyc) / 0.1 : 1;
+                if(rp > 0){
+                    const o = 0.02 * R, n2 = Math.max(2, Math.round(rp * pts.length));ctx.globalAlpha = thr * (dim ? 0.55 : 0.95) * fd;
+                    ctx.beginPath();
+                    pts.slice(0, n2).forEach((pt, s) => s ? ctx.lineTo(pt[0] + o, pt[1] + o) : ctx.moveTo(pt[0] + o, pt[1] + o));
+                    ctx.strokeStyle = 'hsl(' + hue(i) + ' 85% 70%)';
+                    ctx.stroke();
+                }
                 ctx.restore();
             }
 
