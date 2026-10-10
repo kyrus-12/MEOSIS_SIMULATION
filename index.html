@@ -1371,10 +1371,7 @@
                     let dx = 0, dy = 0;
                     Lp.push({t, x : c.x + sd * R *((ph === 4 || ph ===8) ? 0.55 : 0.8), y : c.y + st});
                 } else if(t === 'cen'){
-                    if(ph === 4) {
-                        const off = 0.55 * R;
-                        Lp.push({t, x : c.x - off + st, y : c.y}, {t, x : c.x + off + st, y : c.y});
-                    } else Lp.push({t, x : c.x + sd * R * (ph === 8 ? 0.55 : 0.8), y : c.y + st});
+                    Lp.push({t, x : c.x + sd * R * ((ph === 4 || ph === 8) ? 0.55 : 0.8), y : c.y + st});
                 }
                 else {
                     const pair = ph <=  4, m = pair ? j >> 1 : j, per = Math.max(1, Math.floor(R * 1.5 / 34)), col = Math.floor(m / per), row = m % per;
