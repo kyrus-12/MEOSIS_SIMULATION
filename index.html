@@ -1496,7 +1496,7 @@
                     a.push(ctr(e.querySelector('i')));
                     cg.set(g, a)
                 });
-                const kk = (phase === 3 || phase === 7) ? 1 : (phase === 5 || phase === 6) ? 2 : 1e9;
+                const kk = (phase === 2 || phase === 3 || phase === 7) ? 1 : (phase === 5 || phase === 6) ? 2 : 1e9;
                 let h = '';
                 all.filter(e => e.it.t === 'chr').forEach(e => {
                     const X = e.it.x, Y = e.it.y;
@@ -1505,7 +1505,7 @@
                     if(!m || !cs) return;
                     const [x, y] = ctr(m);
                     cs.slice().sort((a, b) => Math.hypot(a[0] - x, a[1] - y) - Math.hypot(b[0] - x, b[1] - y)).slice(0, kk).forEach(q => {
-                        h += '<line x1="' + q[0] + '" y1="' + q[1] + '" x2="' + x +'" y2="' + y + '"/>'
+                        const ox = kk === 2 ? (q[0] > x ? 5 : -5) : 0; h += '<line x1="' + q[0] + '" y1="' + q[1] + '" x2="' + (x + ox) +'" y2="' + y + '"/>'
                     });
                 });
                 f.innerHTML = h;
@@ -1734,8 +1734,8 @@
                     })(),
                     coil + p('M18.7 34.8Q15 44.4 11 54', x, 6, 'class="xo"') + dot(20, 30), X, X, X,
                     coil + p('M18.7 34.8Q15 44.4 11 54', x, 6) + dot(20, 30), X,
-                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + dot(28, 30) : p('M30, 10L12, 30L30, 50', b, 7) + dot(12, 30),
-                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C10 40 10 46 20 56', x, 4) + dot(20, 30)
+                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + dot(28, 30) : p('M30, 10L12, 30L30, 50', b, 7) + p('M30, 30L30, 50', x, 7) + dot(12, 30),
+                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C30 40 30 46 20 56', x, 4) + dot(20, 30)
                 ][ph];
             }
 
