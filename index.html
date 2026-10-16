@@ -3,7 +3,7 @@
     <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Meosis Simulation</title>
+    <title>ME-YOU-SIS Simulation</title>
     <style>
         :root{
             --bg:#fff;
@@ -184,6 +184,7 @@
             border-radius:12px;
             padding:8px 10px;
             margin-bottom:8px;
+            background:#f4f4f5;
             transition:background 0.2s, border-color 0.2s;
         }
         .q.ok{
@@ -196,7 +197,7 @@
         }
         .qr{
             display:flex;
-            align-items:center;
+            align-items:left;
             gap:8px;
         }
         .qr label{
@@ -390,6 +391,26 @@
             border-radius:50%;
             background:#fbbf24;
             box-shadow:0 0 8px #fbbf24;
+            position:relative;
+        }
+        .el.cen i::before,
+        .el.cen i::after{
+            content:'';
+            position:absolute;
+            background:#b45309;
+            border-radius:4px;
+        }
+        .el.cen i::before{ 
+            width:11px; 
+            height:5px; 
+            left:3px; 
+            top:14px;
+        }
+        .el.cen i::after { 
+            width:5px;
+            height:11px;
+            left:17px;
+            top:6px;
         }
         .el.chr{
             line-height:0;
@@ -441,7 +462,7 @@
         }
         .opts{
             display:flex;
-            flex-wrap:wrap;
+            flex-direction:column;
             gap:6px;
             margin-top:6px;
         }
@@ -452,8 +473,10 @@
             border-radius:10px;
             padding:6px 10px;
             font:inherit;
-            font-size:13px;
+            font-size:15px;
+            text-align:left;
             cursor:pointer;
+            width:100%;
         }
         .opt.pick{
             border-color:#6366f1;
@@ -526,20 +549,18 @@
         @keyframes glow{
             from{ box-shadow:0 0 4px #fbbf24;} to {box-shadow:0 0 16px 4px #fbbf24}
         }
-        .board.playing.p1 .el.nuc{
-            animation:dissolve 2.4s ease-in-out infinite alternate;
-        }
-        .board.playing.p4 .el.nuc,
-        .board.playing.p8 .el.nuc{
-            animation:form 2.4s ease-out forwards;
-        }
-        .board.playing.p4 .el.nuc,
-        .board.playing.p8 .el.nuc{
-            animation:none;
-            display:none;
-        }
+        .board.playing.p1 .el.nuc,
         .board.playing.p5 .el.nuc{
-            animation:dissolve 2.4s ease-in-out infinite alternate;
+            animation:dissolve 2.4s ease-in-out forwards;
+        }
+        .board.playing.p4 .el.nuc,
+        .board.playing.p8 .el.nuc{
+            animation:form 2.4s ease-in-out infinite alternate;
+        }
+        .board.playing.cyto .el.nuc{
+            animation:none;
+            opacity:1;
+            filter:none;
         }
         @keyframes dissolve{
             from{opacity:1} to {opacity:0.15}
@@ -664,6 +685,32 @@
             font-weight:600;
             line-height:1.3;
         }
+        #retry{
+            display:block;
+            width:auto;
+            min-width:160px;
+            margin:10px auto 0;
+            padding:10px 24px;
+            border:1px solid var(--line);
+            border-radius:12px;
+            background:#08519C;
+            color:#fff;
+            font:inherit;
+            font-size:14px;
+            font-weight:600;
+            cursor:pointer;
+            text-align:center;
+        }
+        #retry:active{ 
+            transform:scale(0.98); 
+        }
+        .opt:disabled{
+            cursor:default;
+        }
+        input:disabled{ 
+            opacity:1; 
+            cursor:default; 
+        }
     </style>
     </head>
     <body>
@@ -714,26 +761,32 @@
                 <p id="phtxt"></p>
                 <div id="qs"></div>
                 <div id="fb"><span id="fbm"></span><b id="score"></b></div>
+                <button id="retry" type="button">Try again</button>
             </aside>
         </div>
         <script>
             const $ = s => document.querySelector(s), lerp = (a,b,k) => a+(b-a)*k;
             const PH = [
-                {n: 'Interphase', c:'violet', t: 'Insert simple definition here or instruction.'},
-                {n: 'Prophase I', c:'violet', t: 'Insert simple definition here or instruction.'},
-                {n: 'Metaphase I', c:'violet', t: 'Insert simple definition here or instruction.'},
-                {n: 'Anaphase I', c:'violet', t: 'Insert simple definition here or instruction.'},
-                {n: 'Telophase I', c:'violet', t: 'Insert simple definition here or instruction.'},
-                {n: 'Prophase II', c:'orange', t: 'Insert simple definition here or instruction.'},
-                {n: 'Metaphase II', c:'orange', t: 'Insert simple definition here or instruction.'},
-                {n: 'Anaphase II', c:'orange', t: 'Insert simple definition here or instruction.'},
-                {n: 'Telophase II', c:'orange', t: 'Insert simple definition here or instruction.'},
+                {n: 'Interphase', c:'violet', t: ''},
+                {n: 'Prophase I', c:'violet', t: ''},
+                {n: 'Metaphase I', c:'violet', t: ''},
+                {n: 'Anaphase I', c:'violet', t: ''},
+                {n: 'Telophase I', c:'violet', t: ''},
+                {n: 'Cytokinesis', c:'violet', t: ''},
+                {n: 'Prophase II', c:'orange', t: ''},
+                {n: 'Metaphase II', c:'orange', t: ''},
+                {n: 'Anaphase II', c:'orange', t: ''},
+                {n: 'Telophase II', c:'orange', t: ''},
+                {n: 'Cytokinesis', c:'orange', t: ''},
             ];
+
+            const BASE = [0, 1, 2, 3, 4, 4, 5, 6, 7, 8, 8];
+            const bph = () => BASE[phase];
 
             let build = false;
             const THREAD_LEN = 0.35;
             const HUE = [330, 200, 265, 155, 40];
-            let thr = 1, N = 10, P = 5, phase = 0, sel = -1, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
+            let thr = 1, thS = 1, th2 = 0, N = 10, P = 5, phase = 0, sel = -1, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
             const cvs = $('#c'), ctx = cvs.getContext('2d');
 
             const stepsEl = $('#steps');
@@ -747,7 +800,7 @@
             });
 
             function setPhase(p){
-                phase = (p+9)%9;
+                phase = (p + PH.length) % PH.length;
                 [...stepsEl.children].forEach((b, i) => b.classList.toggle('on', i === phase));
                 showFormula();
                 renderQuiz();
@@ -785,15 +838,84 @@
 
             const mq = (q, a, ok, h) => ({q, a, ok, h});
             const Q = [
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + '  chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
-                [mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = '+ N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.')],
+                [
+                    mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many DNA molecules are in the cell BEFORE the DNA is copied?', N => N, N => 'Yes! Each of the ' + N + ' chromosomes is one DNA molecule before copying.', 'Before DNA replication, each chromosome is a single DNA molecule, so the answer equals the 2n number.'),
+                    mq('How many DNA molecules are in the cell AFTER the DNA is copied?', N => N * 2, N => 'Yes! ' + N + ' x 2 = ' + (N * 2) + ' DNA molecules.', 'Every DNA molecule is copied, so the number doubles. Multiply the 2n number by 2.'),
+                    mq('How many sister chromatids does each chromosome have after DNA is copied?', N => 2, N => 'Yes! Each chromosome now has 2 sister chromatids.', 'A copied chromosome is made of the original DNA plus its copy, which makes 2 sister chromatids.'),
+                    mq('How many homologous pairs are in the cell?', N => N / 2, N => 'Yes! ' + N + ' chromosomes make ' + (N / 2) + ' homologous pairs.', 'Homologous chromosomes come in pairs, one from each parent. Divide the 2n number by 2.'),   
+                ],
+                [
+                    mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many sister chromatids are in the cell?', N => N * 2, N => 'Yes! ' + N + ' x 2 = ' + (N * 2) + ' sister chromatids.', 'Each chromosome has 2 sister chromatids. Multiply the 2n number by 2.'),
+                    mq('How many homologous pairs are in the cell?', N => N / 2, N => 'Yes! ' + N + ' chromosomes make ' + (N / 2) + ' homologous pairs.', 'Homologous chromosomes come in pairs. Divide the 2n number by 2.'),
+                    mq('How many chromosomes make up each homologous pair?', N => 2, N => 'Yes! Each pair has 2 chromosomes, one from each parent.', 'A homologous pair is one chromosome from each parent, so there are 2.'),
+                ],
+                [
+                    mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many chromosomes line up along the middle of the cell?', N => N, N => 'Yes! All ' + N + ' chromosomes are at the center, in pairs.', 'Every chromosome is lined up, so the answer equals the 2n number.'),
+                    mq('How many sister chromatids line up along the middle of the cell?', N => N * 2, N => 'Yes! ' + N + ' x 2 = ' + (N * 2) + ' sister chromatids.', 'Each chromosome has 2 sister chromatids. Multiply the 2n number by 2.'),
+                    mq('How many poles does the spindle have?', N => 2, N => 'Yes! The spindle has 2 poles, one on each side of the cell.', 'Spindle fibers pull toward opposite sides of the cell, so there are 2 poles.')
+                ],
+                [
+                    mq('How many chromosomes are in the cell?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many chromosomes are in the cell right BEFORE Anaphase I begins?', N => N, N => 'Yes! There are still ' + N + ' chromosomes.', 'Before the homologous chromosomes separate, the count is still the 2n number.'),
+                    mq('How many chromosomes are in the whole cell AFTER the homologous chromosomes separate?', N => N, N => 'Yes! Still ' + N + ' chromosomes. The pairs split apart, but no new chromosomes are made.', 'Only the homologous pairs move apart. The chromosome count in the cell does not change.'),
+                    mq('How many chromosomes are pulled toward EACH pole?', N => N / 2, N => 'Yes! Each pole receives ' + (N / 2) + ' chromosomes, one from every homologous pair.', 'Each homologous pair splits, one chromosome to each pole. Divide the 2n number by 2.'),
+                    mq('How many centromeres split in the cell?', N => 0, N => 'Yes! 0. The centromeres do NOT split in Anaphase I.', 'In Anaphase I, whole chromosomes are pulled apart. The centromeres split later, in Anaphase II.'),
+                    mq('How many sister chromatids does each chromosome have during Anaphase I?', N => 2, N => 'Yes! Each chromosome still has 2 sister chromatids.', 'The sister chromatids stay together until Meiosis II, so each chromosome still has 2.')
+               ],
+                [
+                    mq('How many chromosomes are in the original cell?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many nuclei form in the cell?', N => 2, N => 'Yes! 2 nuclei form, one at each pole.', 'A new nuclear envelope forms around the chromosomes at each pole, so there are 2 nuclei.'),
+                    mq('How many chromosomes are in EACH new nucleus?', N => N / 2, N => 'Yes! Each new nucleus has ' + (N / 2) + ' chromosomes, half of the original.', 'Each nucleus got one chromosome from every homologous pair. Divide the 2n number by 2.'),
+                    mq('How many chromosomes are in BOTH new nuclei combined?', N => N, N => 'Yes! ' + (N / 2) + ' + ' + (N / 2) + ' = ' + N + ' chromosomes.', 'Add the chromosomes in the 2 nuclei together. The total equals the 2n number.'),
+                    mq('How many sister chromatids does each chromosome have in Telophase I?', N => 2, N => 'Yes! Each chromosome still has 2 sister chromatids.', 'The sister chromatids have not separated yet, so each chromosome still has 2.'),
+                    mq('How many cells are there in Telophase I, before the cytoplasm divides?', N => 1, N => 'Yes! There is still 1 cell with 2 nuclei. The cell divides in Cytokinesis.', 'The cytoplasm has not split yet. That happens in Cytokinesis, so there is still only 1 cell.')                ],
+                [
+                    mq('How many chromosomes are in the cell before it divides?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many cells are made when the cytoplasm divides?', N => 2, N => 'Yes! The cell splits into 2 cells.', 'The parent cell splits in half, so 2 cells are made.'),
+                    mq('How many chromosomes are in EACH new cell?', N => N / 2, N => 'Yes! Each new cell has ' + (N / 2) + ' chromosomes, half of the original.', 'Each new cell has the chromosomes of one nucleus. Divide the 2n number by 2.'),
+                    mq('How many chromosomes are in BOTH new cells combined?', N => N, N => 'Yes! ' + (N / 2) + ' + ' + (N / 2) + ' = ' + N + ' chromosomes.', 'Add the chromosomes in the 2 cells together. The total equals the 2n number.'),
+                    mq('How many nuclei are in EACH new cell?', N => 1, N => 'Yes! Each new cell has 1 nucleus.', 'Each of the 2 nuclei ends up in its own cell, so each cell has 1.'),
+                    mq('How many FEWER chromosomes does each new cell have than the original cell?', N => N / 2, N => 'Yes! ' + N + ' - ' + (N / 2) + ' = ' + (N / 2) + ' fewer chromosomes.', 'Each new cell has half the original number. Subtract half of the 2n number from the 2n number.')                ],
+                [
+                    mq('How many cells are in Prophase II?', N => 2, N => 'Yes! Both cells from Meiosis I go through Meiosis II, so there are 2 cells.', 'Meiosis I made 2 cells, and both of them continue into Meiosis II.'),
+                    mq('How many chromosomes are in EACH cell?', N => N / 2, N => 'Yes! Each cell has ' + (N / 2) + ' chromosomes.', 'Each cell has half of the 2n number.'),
+                    mq('How many sister chromatids are in EACH cell?', N => N, N => 'Yes! ' + (N / 2) + ' x 2 = ' + N + ' sister chromatids in each cell.', 'Each chromosome has 2 sister chromatids. Multiply the chromosomes in one cell by 2.'),
+                    mq('How many chromosomes are in BOTH cells combined?', N => N, N => 'Yes! ' + (N / 2) + ' + ' + (N / 2) + ' = ' + N + ' chromosomes.', 'Add the chromosomes in the 2 cells together. The total equals the 2n number.'),
+                    mq('How many times is the DNA copied between Meiosis I and Meiosis II?', N => 0, N => 'Yes! 0. The DNA is not copied again. Remember that DNA duplication occurs during interphase.', 'DNA is copied only once, before Meiosis I.'),
+                    mq('How many centrosomes move to opposite poles in EACH cell?', N => 2, N => 'Yes! 2 centrosomes, one for each pole.', 'The spindle needs 2 poles, so 2 centrosomes move apart.')
+                ],
+                [
+                    mq('How many chromosomes are in EACH cell?', N => N / 2, N => 'Yes! Each cell has ' + (N / 2) + ' chromosomes.', 'Each cell has half of the 2n number.'),
+                    mq('How many chromosomes line up along the middle of EACH cell?', N => N / 2, N => 'Yes! All ' + (N / 2) + ' chromosomes line up at the center.', 'Every chromosome in the cell lines up at the center.'),
+                    mq('How many sister chromatids line up along the middle of EACH cell?', N => N, N => 'Yes! ' + (N / 2) + ' x 2 = ' + N + ' sister chromatids.', 'Each chromosome has 2 sister chromatids. Multiply the chromosomes in one cell by 2.'), 
+                    mq('How many poles does the spindle have in EACH cell?', N => 2, N => 'Yes! Each spindle has 2 poles.', 'Spindle fibers pull toward opposite sides of the cell, so there are 2 poles.')
+                ],
+                [
+                    mq('How many chromosomes are in EACH cell right BEFORE Anaphase II begins?', N => N / 2, N => 'Yes! Each cell has ' + (N / 2) + ' chromosomes.', 'Each cell has half of the 2n number.'),
+                    mq('How many chromosomes are in EACH cell AFTER the sister chromatids separate?', N => N, N => 'Yes! ' + (N / 2) + ' x 2 = ' + N + ' chromosomes.', 'Each sister chromatid is now its own chromosome, so the number doubles. Multiply the chromosomes in one cell by 2.'),
+                    mq('How many chromosomes are in BOTH cells combined AFTER the sister chromatids separate?', N => N * 2, N => 'Yes! ' + N + ' + ' + N + ' = ' + (N * 2) + ' chromosomes.', 'Add the chromosomes in the 2 cells together. Multiply the 2n number by 2.'),
+                    mq('How many chromosomes are pulled toward EACH pole in one cell?', N => N / 2, N => 'Yes! Each pole receives ' + (N / 2) + ' chromosomes.', 'The chromosomes split evenly between 2 poles. Divide the chromosomes in the cell by 2.'),
+                    mq('How many chromatids does each chromosome have AFTER separation?', N => 1, N => 'Yes! Each chromosome is now a single chromatid.', 'After the sister chromatids separate, each one is a chromosome with only 1 chromatid.')
+                ],
+                [
+                    mq('How many cells are there in Telophase II, before the cytoplasm divides?', N => 2, N => 'Yes! There are still 2 cells. They divide in Cytokinesis.', 'The cytoplasm has not split yet. The 2 cells from Meiosis I are still there.'),
+                    mq('How many nuclei form in EACH cell?', N => 2, N => 'Yes! Each cell forms 2 nuclei, one at each pole.', 'A new nuclear envelope forms at each pole of the cell, so there are 2 nuclei.'),
+                    mq('How many nuclei form in total?', N => 4, N => 'Yes! 2 cells x 2 nuclei = 4 nuclei.', 'Each of the 2 cells makes 2 nuclei. Multiply 2 x 2.'),
+                    mq('How many chromosomes are in EACH new nucleus?', N => N / 2, N => 'Yes! Each nucleus has ' + (N / 2) + ' chromosomes, half of the original.', 'Meiosis makes nuclei with half the chromosomes of the original cell. Divide the 2n number by 2.'),
+                    mq('How many chromosomes are in all 4 nuclei combined?', N => N * 2, N => 'Yes! ' + (N / 2) + ' x 4 = ' + (N * 2) + ' chromosomes.', 'Each of the 4 nuclei has half of the 2n number. Multiply that by 4.'),
+                    mq('How many chromatids does each chromosome have in Telophase II?', N => 1, N => 'Yes! Each chromosome is a single chromatid.', 'The sister chromatids were separated in Anaphase II, so each chromosome has only 1 chromatid.')
+                ],
+                [
+                    mq('How many chromosomes are in the original cell that started meiosis?', N => N, N => 'Yes! 2n = ' + N + ' means ' + N + ' chromosomes.', 'Read the formula: 2n is the total number of chromosomes.'),
+                    mq('How many daughter cells are made in total?', N => 4, N => 'Yes! Meiosis makes 4 daughter cells.', 'Each of the 2 cells splits in half, so 2 x 2 = 4 daughter cells.'),
+                    mq('How many nuclei are in EACH daughter cell?', N => 1, N => 'Yes! Each daughter cell has 1 nucleus.', 'Each of the 4 nuclei ends up in its own cell, so each cell has 1.'),
+                    mq('How many chromosomes does EACH daughter cell have?', N => N / 2, N => 'Yes! Each daughter cell has ' + (N / 2) + ' chromosomes, half of the original.', 'Meiosis makes cells with half the chromosomes of the parent. Divide the 2n number by 2.'),
+                    mq('How many chromosomes are in all 4 daughter cells combined?', N => N * 2, N => 'Yes! ' + (N / 2) + ' x 4 = ' + (N * 2) + ' chromosomes.', 'Each of the 4 cells has half of the 2n number. Multiply that by 4.'),
+                    mq('How many FEWER chromosomes does each daughter cell have than the original cell?', N => N / 2, N => 'Yes! ' + N + ' - ' + (N / 2) + ' = ' + (N / 2) + ' fewer chromosomes.', 'Each daughter cell has half the original number. Subtract half of the 2n number from the 2n number.')
+                ],
             ];
 
             const ans = {}, qk = i => N + '|' +phase+ '|' + i;
@@ -813,6 +935,7 @@
                     
                     const inp = d.querySelector('input'), st = ans[qk(i)];
                     if(st)inp.value = st.v;
+                    if(st && st.ok !== null && st.ok !== undefined) inp.disabled = true;
                     inp.addEventListener('input', () => {
                         inp.value = inp.value.replace(/\D/g, '');
                         grade(i, d, inp, false)
@@ -832,11 +955,14 @@
             }
 
             function grade(i, d, inp, force){
+                const old = ans[qk(i)];
+                if(old && old.ok !== null && old.ok !== undefined) return;
                 const a = String(Q[phase][i].a(N)), v = inp.value;
                 let ok = null;
                 if(v === a)ok = true;
                 else if(v !== '' && (force || v.length >= a.length)) ok = false;
                 ans[qk(i)] = {v, ok};
+                if(ok !== null) inp.disabled = true;
                 paint(i, d);
                 summary();
             }
@@ -856,11 +982,21 @@
                 Q.forEach((qs, p) => qs.forEach((q, i) => { tot++; if ((ans[N+'|'+p+'|'+i] || {}).ok)all++}));
                 const done = here === Q[phase].length;
                 $('#fb').className = done ? 'done' : '';
-                $('#fbm').textContent = done ? (phase < 8 ? 'Phase complete! Try '+PH[phase + 1].n+' next. 🥹' : 'All phases done! Try another chromosome number. 🥳') : here+' of '+Q[phase].length+ ' correct. Answers are checked automatically.';
+                $('#fbm').textContent = done ? (phase < PH.length - 1 ? 'Phase complete! Try '+PH[phase + 1].n+' next. 🥹' : 'All phases done! Try another chromosome number. 🥳') : here+' of '+Q[phase].length+ ' correct. Answers are checked automatically.';
                 $('#score').textContent = all + ' / '+tot;
             }
 
             $('#cnt').addEventListener('change', e => build ? cset(e.target.value) : setN(e.target.value));
+
+            $('#retry').addEventListener('click', () => {
+                if(build){
+                    Object.keys(mans).forEach(k => { if(k.split('|')[0] === String(phase)) delete mans[k]; });
+                    renderMCQ();
+                } else {
+                    Q[phase].forEach((q, i) => delete ans[qk(i)]);
+                    renderQuiz();
+                }
+            });
 
             function hold(id, d){
                 const b = $(id);
@@ -909,7 +1045,7 @@
                 return[Math.cos(a) * r, Math.sin(a) * r];
             }
 
-            function target(ph){
+            function target(ph, cyto){
                 const cx = W/2, cy = H/2, u = R, sc = scl(), uu = u * sc, L = 0.28 * uu, q = 0.18 * L, dy = 0.6 * u, a2 = 1.1 * u, b2 = 0.5 * u;
                 const mW = Math.max(Math.max(2.2, 5 * sc), 0.035 * uu);
                 const g = Math.min(0.4 * uu, 1.6 * u / (P - 1)), g2 = Math.min(1.1 * L, (1.7 * b2 - L) / (P - 1));
@@ -918,13 +1054,14 @@
                 let c;
                 if(ph < 4){
                     if(ph < 3){
-                        const s = [[cx, cy, u, u, 1, 1], [cx, cy, u, u, 1, 0.3], [cx, cy, u, u, 1, 0]][ph]; c = [s, z(s), z(s), z(s)]    
+                        const s = [[cx, cy, u, u, 1, 1], [cx, cy, u, u, 1, 0.15], [cx, cy, u, u, 1, 0]][ph]; c = [s, z(s), z(s), z(s)]    
                     } else {
                         const A = [cx - 0.42 * u, cy, 0.7 * u, u, 1, 0], B = [cx + 0.42 * u, cy, 0.7 * u, u, 1, 0]; c = [A, B, z(A), z(B)]
                     }   
                 } else if(ph < 8){
-                    const nu = [1, 0.3, 0, 0][ph - 4], rc = b2; 
-                    const A = ph == 4 ? [cx - dy, cy, rc, rc, 1, nu]: [cx, cy - dy, rc, rc, 1, nu], B = ph == 4 ? [cx + dy, cy, rc, rc, 1, nu] : [cx, cy + dy, rc, rc, 1, nu];
+                    const nu = [1, 0.15, 0, 0][ph - 4], rc = b2; 
+                    const wa = cyto ? 0.5 * u : 0.68 * u;
+                    const A = ph == 4 ? [cx - dy, cy, wa, rc, 1, nu]: [cx, cy - dy, rc, rc, 1, nu], B = ph == 4 ? [cx + dy, cy, wa, rc, 1, nu] : [cx, cy + dy, rc, rc, 1, nu];                
                     if(ph < 7){
                         c = [A, B, z(A), z(B)];
                     } else {
@@ -932,16 +1069,17 @@
                         c = [[cx - xo, cy - dy, rc, rc, 1, 0], [cx - xo, cy + dy, rc, rc, 1, 0], [cx + xo, cy - dy, rc, rc, 1, 0], [cx + xo, cy + dy, rc, rc, 1, 0]];
                     }
                 } else {
-                    const a = 0.5 * u, x = 0.6 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
+                    const a = (cyto ? 0.5 : 0.68) * u, x = 0.6 * u; c = [[cx - x, cy - dy, a, b2, 1, 1], [cx - x, cy + dy, a, b2, 1, 1], [cx + x, cy - dy, a, b2, 1,1], [cx + x, cy + dy, a, b2, 1, 1]]
                 }
 
                 const ps = a => [[cx - a, cy, 1], [cx + a, cy, 1], [cx - a, cy, 0], [cx  + a, cy, 0]];
                 const p5 = (al, d) => [[cx - d, cy - dy, al], [cx - d, cy + dy, al], [cx + d, cy - dy, al], [cx + d, cy + dy, al]];
                 const pt = al => {
                     const e = 0.15 * u, xL = cx - dy - b2 + 0.12 * u, xR = cx + dy + b2 - 0.12 * u;
-                    return [[xL, cy - e, al], [xR, cy - e, al], [xL, cy + e, al], [xR, cy + e, al]];
+                    return [[xL, cy, al], [xR, cy, al], [xL, cy, 0], [xR, cy, 0]];
                 };
-                const p0 = [[cx - 0.07 * u, cy - 0.78 * u, 1], [cx + 0.07 * u, cy - 0.78 * u, 1], [cx - 0.07 * u, cy - 0.78 * u, 0], [cx + 0.07 * u, cy - 0.78 * u, 0]];
+                const cg = 0.12; 
+                const p0 = [[cx - cg * u, cy - 0.78 * u, 1], [cx + cg * u, cy - 0.78 * u, 1], [cx - cg * u, cy - 0.78 * u, 0], [cx + cg * u, cy - 0.78 * u, 0]];
                 const pl = [p0, ps(0.8 * u), ps(0.9 * u), ps(0.98 * u), pt(1), p5(1, 0.4 * u), p5(1, 0.4 * u), p5(1, 0.8 * u), p5(1, 0.98 * u), p5(0, 0.6 * u)][ph];
                 const xs = (x, y, Lx, a, wv, o, qq, w) => [mk(x - o, y, Lx, w, wv, a, -qq, qq), mk(x + o, y, Lx, w, wv, a, qq, -qq)];
                 const ch = [], spa = [];
@@ -953,8 +1091,9 @@
                         v = sp(i, N, 0.18 * u, 0.1 * u);
                         m = xs(cx + v[0], cy + v[1], 0.3 * uu, i * 0.9 + 0.6, 1, 0, 0.03 * uu, Math.max(Math.max(1.6, 2.5 * sc), 0.016 * uu))
                     } else if(ph == 1){
-                        v = sp(p, P, 0.62 * u - 0.6 * L, 0.3 * u);
-                        const d = 0.1 * uu * s;
+                        const rm = Math.max(0, 0.62 * u - 0.5 * L - 0.14 * uu - 0.02 * u);
+                        v = sp(p, P, rm, Math.min(0.4 * u, rm));
+                        const d = 0.14 * uu * s;
                         m = xs(cx + v[0] + Math.cos(a) * d, cy + v[1] + Math.sin(a) * d, L, a, 0.25, 0, q, mW)
                     } else if(ph == 2){
                         m = xs(cx + s * 0.17 * uu, cy + r * g, L, 0, 0, 0, q, mW);
@@ -964,7 +1103,8 @@
                         v = sp(p, P, 0.2 * u, 0.14 * u);
                         m = xs(cx + s * dy + v[0], cy + v[1], L, a, 0.5, 0, q, mW)
                     } else if(ph == 5){
-                        v = sp(p, P, 0.3 * u, 0.18 * u);
+                        const rm = Math.max(0, 0.31 * u - 0.5 * L - 0.02 * u);
+                        v = sp(p, P, rm, Math.min(0.18 * u, rm));
                         m = xs(cx + v[0], cy + s * dy + v[1], L, a, 0.5, 0, q, mW)
                     } else if(ph == 6){
                         m = xs(cx, cy + s * dy + r * g2, L, 0, 0, 0, q, mW);
@@ -979,7 +1119,7 @@
                     ch.push(m);
                     spa.push(ph == 1 || ph == 2 || ph == 3 ? [j, j] : ph == 5 || ph == 6 || ph == 7 ? [j, j + 2] : [-1, -1]);
                 }
-                return{c, pl, sp : spa, spin : (ph == 2 || ph == 3 || ph == 6 || ph == 7) ? 1 : (ph == 1 || ph == 5) ? 0.7 : 0, chi : 0, ch};
+                return{c, pl, sp : spa, spin : (ph == 2 || ph == 3 || ph == 6 || ph == 7) ? 1 : 0, chi : 0, ch};
             }
             const CK = ['x', 'y', 'tx', 'bx', 'L', 'w', 'wave', 'ang'];
             
@@ -994,8 +1134,8 @@
             }
 
             function drift(i, k){
-                k = phase >= 7 ? k : 0;
-                const s = phase < 2 ? 1 : 0.35;
+                k = bph() >= 7 ? k : 0;
+                const s = bph() < 2 ? 1 : 0.35;
                 return[Math.sin(t * 0.9 + i * 1.7 + k * 2) * 0.012 * R * s, 
                 Math.cos(t * 0.8 + i * 2.3 + k) * 0.012 * R * s];
             }
@@ -1039,7 +1179,7 @@
                 ctx.lineWidth = c.w; 
                 ctx.stroke();
                 if(phase >= 1 && (i ^ 1) < N){
-                    const top = (i & 1) ? k == 1 : k == 0, a0 = top ? 0 : 15, a1 = top ? 7 : 22;
+                    const top = (i & 1) ? k == 0 : k == 1, a0 = top ? 4 : 11, a1 = top ? 11 : 18;
                     ctx.beginPath();
                     for(let s = a0; s <= a1; s++) s == a0 ? ctx.moveTo(pts[s][0], pts[s][1]) : ctx.lineTo(pts[s][0], pts[s][1]); 
                     ctx.strokeStyle = colOf(i ^ 1, 1 - k);
@@ -1060,8 +1200,9 @@
                 return Math.max(1.5, 0.02 * R * Math.min(1, 2 / Math.sqrt(P)));
             }
 
-            function threadPts(c, i){
-                const u = R, [dx, dy] = drift(i, 0), k = 0.35 + 0.65 * thr, TP = 6.2832;
+            function threadPts(c, i0, kc = 0){
+                const i = kc ? i0 + 23 : i0;
+                const u = R, [dx, dy] = drift(i0, kc), k = (0.35 + 0.65 * thr) * thS, TP = 6.2832;
                 const f1 = 2.3 + 0.4 * ((i * 7) % 3), f2 = 5.4 + 0.4 * ((i * 5) % 4), f3 = 9.2 + 0.5 * ((i * 3) % 5);
                 const g1 = 3.3 + 0.4 * ((i * 5) % 3), g2 = 6.4 + 0.4 * ((i * 3) % 4), g3 = 10.2 + 0.5 * ((i * 7) % 4);
                 const A1 = 0.19 * u * k, A2 = 0.11 * u * k, A3 = 0.03 * u *k;
@@ -1077,11 +1218,11 @@
                 return pts;
             }
 
-            function thread(c, i, hl, dim){
+            function thread(c, i, hl, dim, kc = 0, am = 1){
                 const col = 'hsl(' + hue(i >> 1) +' 80% ' + (i & 1 ? 44 : 60) + '%)';
-                const pts = threadPts(c, i), lw = threadLW();
+                const pts = threadPts(c, i, kc), lw = threadLW();
                 ctx.save();
-                ctx.globalAlpha = thr * (dim ? 0.55 : 0.95);
+                ctx.globalAlpha = thr * am * (dim ? 0.55 : 0.95);
                 ctx.beginPath();
                 pts.forEach((pt, n) => n ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]));
                 ctx.lineCap = ctx.lineJoin = 'round';
@@ -1097,11 +1238,11 @@
                 ctx.lineWidth = lw;
                 ctx.stroke();
                 const cyc = ((t + i * 0.7) % 10) / 10, rp = clamp01((cyc - 0.1) / 0.55), fd = cyc > 0.9 ? (1 - cyc) / 0.1 : 1;
-                if(rp > 0){
-                    const o = 0.02 * R, n2 = Math.max(2, Math.round(rp * pts.length));ctx.globalAlpha = thr * (dim ? 0.55 : 0.95) * fd;
+                if(rp > 0 && th2 < 0.98){
+                    const o = 0.02 * R, n2 = Math.max(2, Math.round(rp * pts.length));ctx.globalAlpha = thr * am * (dim ? 0.55 : 0.95) * fd * (1 - th2);
                     ctx.beginPath();
                     pts.slice(0, n2).forEach((pt, s) => s ? ctx.lineTo(pt[0] + o, pt[1] + o) : ctx.moveTo(pt[0] + o, pt[1] + o));
-                    ctx.strokeStyle = col;
+                    ctx.strokeStyle = 'hsl(' + hue(i >> 1) + ' 85% 70%)';
                     ctx.stroke();
                 }
                 ctx.restore();
@@ -1188,20 +1329,33 @@
                     ctx.save();
                     ctx.globalAlpha = al;
                     ctx.beginPath();
-                    ctx.arc(x, y, 0.05 * u * pu, 0, 7);
+                    ctx.arc(x, y, 0.05 * u, 0, 7);
                     ctx.fillStyle = '#fbbf24';
                     ctx.shadowColor = '#fbbf24';
                     ctx.shadowBlur = 12;
                     ctx.fill();
+                    const r = 0.05 * u;
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = '#b45309';
+                    ctx.lineCap = 'round';
+                    ctx.lineWidth = Math.max(1.2, r * 0.3);
+                    ctx.beginPath();
+                    ctx.moveTo(x - r * 0.5, y + r * 0.3); ctx.lineTo(x - r * 0.1, y + r * 0.3);
+                    ctx.moveTo(x + r * 0.32, y - r * 0.5); ctx.lineTo(x + r * 0.32, y - r * 0.1);
+                    ctx.stroke();
                     ctx.restore();
                 });
 
                 const order = sel >= 0 ? [...S.ch.keys()].filter(i => i !== sel).concat(sel) : [...S.ch.keys()];
                 order.forEach(i => {
-                    if(thr > 0.02) thread(S.ch[i][0], i, i === sel, sel >= 0 && i !== sel);
+                    if(thr > 0.02){
+                        thread(S.ch[i][0], i, i === sel, sel >= 0 && i !== sel);
+                        if(th2 > 0.02) thread(S.ch[i][1], i, i === sel, sel >= 0 && i !== sel, 1, th2);
+                    }
                     S.ch[i].forEach((c, k) => chromatid(c, i, k, i === sel, sel >= 0 && i !== sel))
                 });
 
+                
                 if(S.chi > 0.02){
                     ctx.save();
                     ctx.globalAlpha = S.chi;
@@ -1210,7 +1364,7 @@
                     for(let p = 0; p < P; p++){
                         const a  = S.ch[2*p][0], b = S.ch[2 * p + 1] && S.ch[2 * p + 1][0];
                         if(!b) continue;
-                        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, r = Math.max(3, 0.04 * u * scl());
+                        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, r = Math.max(0.8, 0.001 * u * scl());
                         ctx.beginPath();
                         ctx.moveTo(mx - r, my - r);
                         ctx.lineTo(mx + r, my + r);
@@ -1222,12 +1376,12 @@
                 }
                 if(sel >= 0){
                     const pr = S.ch[sel], sep = Math.hypot(pr[0].x - pr[1].x, pr[0].y - pr[1].y) > 0.3 * u;
-                    (sep ? pr : [pr[0]]).forEach(c0 => {
+                    (sep ? pr : [pr[0]]).forEach((c0, kc) => {
                         let c = c0;
                         const [dx, dy] = drift(sel, 0);
                         let r = Math.max(0.22 * u * scl(), 14) + Math.sin(t * 4) * 3;
                         if(thr > 0.5){
-                            const tp = threadPts(c0, sel), mx = tp.reduce((a, q) => a + q[0], 0) / tp.length, my = tp.reduce((a, q) => a + q[1], 0) / tp.length;
+                            const tp = threadPts(c0, sel, kc), mx = tp.reduce((a, q) => a + q[0], 0) / tp.length, my = tp.reduce((a, q) => a + q[1], 0) / tp.length;
                             c = {x : mx - dx, y : my - dy};
                             r = Math.max(...tp.map(q => Math.hypot(q[0] - mx, q[1] - my))) + 10 + Math.sin(t * 4) * 2;
                         }
@@ -1248,8 +1402,10 @@
             function frame(now){
                 const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
                 if(W){
-                    const T = target(phase), f = 1 - Math.exp(-dt * 3.5);
-                    thr = lerp(thr, phase === 0 ? 1 : 0, f);
+                    const T = target(bph(), phase === 5 || phase === 10), f = 1 - Math.exp(-dt * 3.5);
+                    thr = lerp(thr, (phase === 0 || phase === 10) ? 1 : 0, f);
+                    thS = lerp(thS, bph() >= 8 ? 0.4 : 1, f);
+                    th2 = lerp(th2, bph() >= 8 ? 1 : 0, f);
                     if(!cur)cur = JSON.parse(JSON.stringify(T));
                     else {
                         while(cur.ch.length > N)cur.ch.pop(); 
@@ -1278,14 +1434,17 @@
                 if(thr > 0.5){
                     let bd = Math.max(9, threadLW() * 3);
                     cur.ch.forEach((pr, i) => {
-                        const pts = threadPts(pr[0], i);
-                        for(let n = 0; n < pts.length - 1; n++){
-                            const d = segDist(mx, my, pts[n], pts[n + 1]);
-                            if(d < bd){
-                                bd = d;
-                                best = i;
+                        pr.forEach((c, kc) => {
+                            if(kc && th2 < 0.5) return;
+                            const pts = threadPts(c, i, kc);
+                            for(let n = 0; n < pts.length - 1; n++){
+                                const d = segDist(mx, my, pts[n], pts[n + 1]);
+                                if(d < bd){
+                                    bd = d;
+                                    best = i;
+                                }
                             }
-                        }
+                        });
                     });
                     return best;
                 } 
@@ -1312,9 +1471,9 @@
             setPhase(0);
             requestAnimationFrame(frame);
 
-            const PB = [[], [], [], [], [], [], [], [], []], names = [], els = {}, CAP = 2000, CD = 360, LBL = {cell:'Cell membrane', nuc:'Nucleus', cen:'Centriole', chr:'Chromosome'};
+            const PB = [[], [], [], [], [], [], [], [], [], [], []], names = [], els = {}, CAP = 2000, CD = 360, LBL = {cell:'Cell membrane', nuc:'Nucleus', cen:'Centriole', chr:'Chromosome'};
             const board = $('#board'), world = $('#world'), cnt = t => PB[phase].filter(x => x.t === t && !x.side).length;
-            const sided = ph => ph >= 7, FIBP = [1, 2, 3, 4, 5, 6, 7];
+            const sided = ph => ph >= 7, FIBP = [2, 3, 4, 6, 7];
             const rad = c => CD * (c.sc || 1) / 2;
 
             function grp(it){
@@ -1343,7 +1502,7 @@
             }
 
              function spawn(t){
-                const Lp = PB[phase], cs = Lp.filter(x => x.t === 'cell'), ph = phase;
+                const Lp = PB[phase], cs = Lp.filter(x => x.t === 'cell'), ph = bph();
                 if(t === 'cell'){
                     const k = cs.length, p = CD * 1.45;
                     Lp.push({t, x : CD * 0.72 + (k % 3) * p, y : CD * 0.72 + Math.floor(k / 3) * p});
@@ -1365,11 +1524,12 @@
                     let dx = 0, dy = 0;
                     Lp.push({t, x : c.x + sd * R *((ph === 4 || ph ===8) ? 0.55 : 0.8), y : c.y + st});
                 } else if(t === 'cen'){
-                    Lp.push({t, x : c.x + sd * R * ((ph === 4 || ph === 8) ? 0.55 : 0.8), y : c.y + st});
+                    if(ph === 4) Lp.push({t, x : c.x + sd * R * 0.55, y : c.y + st});
+                   else Lp.push({t, x : c.x + sd * R * (ph === 8 ? 0.55 : 0.8), y : c.y + st});
                 }
                 else {
-                    const pair = ph <=  4, m = pair ? j >> 1 : j, per = Math.max(1, Math.floor(R * 1.5 / 34)), col = Math.floor(m / per), row = m % per;
-                    const sx = (col % 2 ? 1 : -1) * Math.ceil(col / 2) * (pair ? 64 : 26), yy = c.y + (row - (per - 1) / 2) * 34;
+                    const pair = ph <=  4, pit = phase === 10 ? 54 : 34, m = pair ? j >> 1 : j, per = Math.max(1, Math.floor(R * 1.5 / pit)), col = Math.floor(m / per), row = m % per;
+                    const sx = (col % 2 ? 1 : -1) * Math.ceil(col / 2) * (pair ? 64 : (phase === 10 ? 54 : 26)), yy = c.y + (row - (per - 1) / 2) * pit;
                     if(ph <= 1){
                         const [a, b] = sp(m, 0.6), h = ph ? 10 : 42;
                         Lp.push({t, x : c.x + a - h, y : c.y + b}, {t, x : c.x + a + h, y : c.y + b});
@@ -1389,7 +1549,7 @@
 
             function setB(t, v){
                 v = Math.max(0, Math.min(CAP, v));
-                if(t === 'chr' && phase <= 4) v = v > cnt('chr') ? Math.ceil(v / 2) * 2 : Math.floor(v / 2) * 2;
+                if(t === 'chr' && bph() <= 4) v = v > cnt('chr') ? Math.ceil(v / 2) * 2 : Math.floor(v / 2) * 2;
                 const rm = tt => {
                     for(let k = PB[phase].length - 1; k >= 0; k--) if(PB[phase][k].t === tt){
                         PB[phase].splice(k, 1);
@@ -1399,7 +1559,7 @@
                 while(cnt(t) < v) spawn(t);
                 while(cnt(t) > v){
                     rm(t);
-                    if(t === 'chr' && sided(phase)) rm(t)
+                    if(t === 'chr' && sided(bph())) rm(t)
                 }
                 sync();
             }
@@ -1419,10 +1579,12 @@
                 'Metaphase I:', 
                 'Anaphase I:', 
                 'Telophase I:',
+                'Cytokinesis:',
                 'Prophase II:',
                 'Metaphase II:', 
                 'Anaphase II:', 
-                'Telophase II:'
+                'Telophase II:',
+                'Cytokinesis:',
             ];
             let selKey = null, bp = false, fl = false, wl = false;
             const dims = (it, e) => {
@@ -1466,15 +1628,15 @@
             function setDirs(){
                 Object.values(els).filter(e => e.it && e.it.t === 'chr').forEach(e => {
                     let d = 1;
-                    if(phase === 3) d = (e.k & 1) ? 1 : -1;
-                    else if(phase === 7) d = e.it.side ? 1 : -1;
+                    if(bph() === 3) d = (e.k & 1) ? 1 : -1;
+                    else if(bph() === 7) d = e.it.side ? 1 : -1;
                     e.style.setProperty('--dir', d);
                 });
             }
 
             function drawFib(){
                 const f = $('#fib');
-                if(!build || !bp || !FIBP.includes(phase)){
+                if(!build || !bp || !FIBP.includes(bph())){
                     if(f.firstChild) f.innerHTML = ''; 
                     return;
                 }
@@ -1489,7 +1651,7 @@
                     a.push(ctr(e.querySelector('i')));
                     cg.set(g, a)
                 });
-                const kk = (phase === 2 || phase === 3 || phase === 7) ? 1 : (phase === 5 || phase === 6) ? 2 : 1e9;
+                const kk = (bph() === 2 || bph() === 3 || bph() === 7) ? 1 : (bph() === 5 || bph() === 6) ? 2 : 1e9;
                 let h = '';
                 all.filter(e => e.it.t === 'chr').forEach(e => {
                     const X = e.it.x, Y = e.it.y;
@@ -1505,7 +1667,7 @@
             }
 
              function wormLoop(){
-                if(build && bp && phase === 0){
+                if(build && bp && (phase === 0 || phase === 10)){
                     const tt = performance.now() / 1000;
                     Object.values(els).forEach(e => {
                         if(e.it && e.it.t === 'chr') drawThreads(e, tt)
@@ -1517,23 +1679,24 @@
 
             function fibLoop(){
                 drawFib();
-                if(build && bp && FIBP.includes(phase)) requestAnimationFrame(fibLoop);
+                if(build && bp && FIBP.includes(bph())) requestAnimationFrame(fibLoop);
                 else fl = false;
             }
 
-            let cl = false, ct0 = 0;
+            let cl = false, ct0 = 0, cph = -1;
             const clamp01 = x => Math.max(0, Math.min(1, x)), ease = x => x * x * (3 - 2 * x), seg = (a, b, c) => ease(clamp01((a - b) / (c - b)));
 
             function cleaveOn(){
-                return build && bp && (phase === 3 || phase === 4 || phase === 7 || phase === 8) && cnt('cell') > 0;
+                return build && cnt('cell') > 0 && (phase === 3 || phase === 4 || phase === 5 || phase === 8 || phase === 9 || phase === 10);
             }
 
             function cleaveLoop(){
                 if(cleaveOn()){
                     drawCleave();
-                    requestAnimationFrame(cleaveLoop);
+                    if(bp) requestAnimationFrame(cleaveLoop);
+                    else cl = false;
                 } else {
-                    cl = false, ct0 = 0; cph = -1;
+                    cl = false, cph = -1;
                     $('#cleave').innerHTML = '';
                 }
             }
@@ -1581,10 +1744,13 @@
                     if(!cl) requestAnimationFrame(cleaveLoop);
                     cl = true;
                     cph = phase;
-                    ct0 = performance.now();  
+                    ct0 = performance.now();
                 }
-                const tt = Math.min(1, (performance.now() - ct0) / 7000), ana = phase === 3 || phase === 7;
-                const q = ana ? seg(tt, 0.1, 0.9) : seg(tt, 0.1, 0.55), m = ana ? 0 : seg(tt, 0.55, 0.75);
+                const pp = (x => x < 1 ? x : 2 - x), now = performance.now() - ct0;
+                const tt = (bp && (phase === 3 || phase === 4 || phase === 8 || phase === 9)) ? pp((now / 2400) % 2) : 1, ana = phase === 3 || phase === 8;
+                const cyto = phase === 5 || phase === 10, tc = bp ? clamp01(pp((now / 6000) % 2) / 0.6) : 1;
+                const q = cyto ? 0.5 + 0.5 * seg (tc, 0, 0.5) : ana ? 0.25 * seg(tt, 0.05, 0.6) : 0.25 + 0.25 * seg(tt, 0.05, 0.6);
+                const m = cyto ? seg(tc, 0.5, 0.85) : 0;
                 const ax = 'x', st = 'style="fill:var(--cell); stroke:var(--cellline); stroke-width:4; stroke-linejoin:round;"';
                 let h = '';
                 const vw = view();
@@ -1623,7 +1789,7 @@
                 tb.hidden = false;
                 $('#tbn').hidden = !chr;
                 $('#tbrl').hidden = $('#tbrr').hidden = !chr;
-                $('#tbtg').hidden = $('#tbst').hidden = !(chr && phase === 0);
+                $('#tbtg').hidden = $('#tbst').hidden = !(chr && (phase === 0 || phase === 10));                
                 $('#tbl').textContent = chr ? '' : LBL[it.t];
                 if(chr && document.activeElement !== $('#tbn')) $('#tbn').value = names[e.k] || '';
                 $('#tbz').textContent = Math.round(clampS(it, e) * 100) + '%';
@@ -1707,16 +1873,23 @@
             }
 
             function redoThreads(e){
-                e.querySelector('svg').innerHTML = chrSvg(hue(e.k >> 1), 0, 0, e.k)
+                Object.values(els).filter(x => x.k === e.k && x.it && x.it.t === 'chr').forEach(x => {
+                    x.querySelector('svg').innerHTML = chrSvg(hue(x.k >> 1), 0, x.sd || 0, x.k, phase === 10)
+                })
             }
 
-             function chrSvg(h, ph, sd, k){
+                function chrSvg(h, ph, sd, k, one){
                 const L0 = (k & 1) ? 44 : 60, Lx = (k & 1) ? 60 : 40;
                 const a = 'hsl(' + h + ' 80% '+L0+ '%)', b = 'hsl(' + h + ' 80% '+(L0+10)+ '%)', x = 'hsl(' + h + ' 85% '+((k & 1) ? 72 : 34) + '%)';
                 const p = (d, c, w, x) => '<path ' + (x || '') + ' d="' + d + '" stroke="' + c + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
                 const dot = (x, y) => '<circle class="cm" cx="' + x + '" cy="' + y + '" r="4.5" fill="#fde86a" stroke="#92400e" stroke-width="1.5"/>';
-                const X = p('M12 12L28 48', a, 8) + p('M20 30L28 48', x, 8) + p('M28 12L12 48', b, 8) + p('M20 30L12 48', x, 8) + dot(20, 30);
-                const coil = p('M11 6Q19 30 29 54', a, 6) + p('M19.5 30Q24 42 29 54', x, 6) + p('M29 6Q21 30 11 54', b, 6);
+                const lf = !(k & 1);
+                const seg = (d, w, up) => p(d, x, w, 'pathlength ="100" stroke-dasharray="28 200" stroke-dashoffset="' + (up ? -22 : -50) + "");
+                const A = 'M12 12L28 48', B = 'M28 12L12 48';
+                const CA = 'M11 6Q19 30 29 54', CB = 'M29 6Q21 30 11 54';
+                const D1 = 'M20 4C30 14 10 20 20 30S30 46 20 56', D0 = 'M20 4C10 14 30 20 20 30S10 46 20 56';
+                const X = p(A, a, 8) + p(B, b, 8) + (lf ? seg(B, 8, 1) + seg(A, 8, 0) : seg(A, 8, 1) + seg(B, 8, 0)) + dot(20, 30);
+                const coil = p(CA, a, 6) + p(CB, b, 6) + (If ? seg(CB, 6, 1) + seg(CA, 6, 0) : seg(CA, 6, 1) + seg(CB, 6, 0));
                 return [
                     (() => {
                         const sh = shapes[k] || (shapes[k] = initShape(k + 1)), dk = 'hsl(' + h + ' 70% 38%)';
@@ -1724,12 +1897,16 @@
                             const en = i === 0 || i === sh[st].length - 1;
                             return '<circle class="hd" data-st="' + st + '" data-i="' + i + '" cx="' + q[0] +'" cy="' + q[1] + '" r="' + (en ? 5.5 : 4) + '" fill="' + (en ? c : '#fff') + '" stroke="' + dk + '" stroke-width="1.5"/>'
                         }).join('');
+                        if(one){
+                            const st = sd ? 'b' : 'a', cc = sd ? b : a;
+                            return p(smoothD(sh[st]), cc, 2.4, 'data-st="' + st + '"') + hs(st, cc);
+                        }
                         return p(smoothD(sh.a), a, 2.4, 'data-st="a"') + p(smoothD(sh.b), b, 2.4, 'class="rep"  pathLength="100" data-st="b"') + hs('b', b) + hs('a', a);
                     })(),
-                    coil + p('M18.7 34.8Q15 44.4 11 54', x, 6, 'class="xo"') + dot(20, 30), X, X, X,
-                    coil + p('M18.7 34.8Q15 44.4 11 54', x, 6) + dot(20, 30), X,
-                    sd ? p('M10 10L28 30L10 50', b, 7) + p('M28 30L10 50', x, 7) + dot(28, 30) : p('M30, 10L12, 30L30, 50', a, 7) + p('M12, 30L30, 50', x, 7) + dot(12, 30),
-                    sd ? p('M20 4C30 14 10 20 20 30S30 46 20 56', b, 4) + p('M20 30C30 40 30 46 20 56', x, 4) + dot(20, 30) : p('M20 4C10 14 30 20 20 30S10 46 20 56', a, 4) + p('M20 30C10 40 10 46 20 56', x, 4) + dot(20, 30)
+                    coil + dot(20, 30), X, X, X,
+                    coil + dot(20, 30), X,
+                    sd ? p('M10 10L28 30L10 50', b, 7) + seg('M10 10L28 30L10 50', 7, lf === !!sd) + dot(28, 30) : p('M30 10L12 30L30 50', a, 7) + seg('M30 10L12 30L30 50', 7, lf === !!sd) + dot(12, 30),
+                    p(sd ? D1 : D0, sd ? b : a, 4) + seg(sd ? D1 : D0, 4, lf === !!sd) + dot(20, 30)
                 ][ph];
             }
 
@@ -1762,20 +1939,24 @@
                         }
                         requestAnimationFrame(() => e.style.opacity = 1);
                     }
-                    e.it = it;
-                    if(it.t === 'chr' && (e.ph !== phase || e.sd !== (it.side || 0))){
-                        e.ph = phase;
+                    e.it= it;
+                    const tm = phase === 0 || phase === 10, one = phase === 10;
+                    if(it.t === 'chr' && (e.ph !== bph() || e.sd !== (it.side || 0) || e.tm !== tm || e.one !== one)){
+                        e.ph = bph();
                         e.sd = it.side || 0;
-                        e.querySelector('.mv').className = 'mv ph' + phase;
+                        e.tm = tm;
+                        e.one = one;
+                        const pm = tm ? 0 : bph(), sz = one ? 52 : 80;
+                        e.querySelector('.mv').className = 'mv ph' + pm;
                         const sv = e.querySelector('svg');
-                        sv.setAttribute('class', 'grip ph' + phase);
-                        sv.setAttribute('width', phase ? 40 : 80);
-                        sv.setAttribute('height', phase ? 60 : 80);
-                        sv.setAttribute('viewBox', phase ? '0 0 40 60' : '0 0 80 80');
-                        sv.innerHTML = chrSvg(hue(k >> 1), phase, e.sd, k);
+                        sv.setAttribute('class', 'grip ph' + pm);
+                        sv.setAttribute('width', tm ? sz : 40);
+                        sv.setAttribute('height', tm ? sz : 60);
+                        sv.setAttribute('viewBox', tm ? '0 0 80 80' : '0 0 40 60');
+                        sv.innerHTML = chrSvg(hue(k >> 1), pm, e.sd, k, one);
                     }
                     place(it, e);
-                    if(it.t === 'chr' && phase === 0 && !bp) drawThreads(e, 0);
+                    if(it.t === 'chr' && tm && !bp) drawThreads(e, 0);
                 });
                 Object.keys(els).forEach(key => {
                     if(!seen[key]){
@@ -1786,19 +1967,20 @@
                     }
                 });
                 if(selKey && !els[selKey]) selKey = null;
-                $('#bcap').textContent = BD[phase];
+                $('#bcap').textContent = '';
+                board.classList.toggle('cyto', phase === 5 || phase === 10);
                 board.classList.toggle('playing', bp);
-                for(let q = 0; q < 9; q++) board.classList.toggle('p' + q, q === phase);
+                for(let q = 0; q < 9; q++) board.classList.toggle('p' + q, q === bph());
                 board.classList.toggle('cl', cleaveOn());
                 fit();
                 setDirs();
                 drawFib();
                 drawCleave();
-                if(bp && !fl && FIBP.includes(phase)){
+                if(bp && !fl && FIBP.includes(bph())){
                     fl = true;
                     requestAnimationFrame(fibLoop);
                 }
-                if(bp && !wl && phase === 0){
+                if(bp && !wl && (phase === 0 || phase === 10)){
                     wl = true;
                     requestAnimationFrame(wormLoop)
                 }
@@ -1893,7 +2075,7 @@
             
             $('#tbtg').onclick = () => {
                 const e = els[selKey];
-                if(e && e.it && e.it.t === 'chr' && phase === 0){
+                if(e && e.it && e.it.t === 'chr' && (phase === 0 || phase === 10)){
                     shapes[e.k] = initShape(Math.floor(Math.random() * 1e6) + 1);
                     redoThreads(e)
                 }
@@ -1901,12 +2083,11 @@
 
             $('#tbst').onclick = () => {
                 const e = els[selKey];
-                if(e && e.it && e.it.t === 'chr' && phase === 0){
+                if(e && e.it && e.it.t === 'chr' && (phase === 0 || phase === 10)){
                     shapes[e.k] = straightShape();
                     redoThreads(e)
                 }
             };
-
             board.addEventListener('pointerdown', ev => {
                 if(ev.target === board || ev.target === world){
                     selKey = null;
@@ -1956,7 +2137,7 @@
                 drawCleave();
             }).observe(board);
 
-            $('#pal').innerHTML = ['cell', 'nuc', 'cen', 'chr'].map(t => '<div class="prow"><b><i class="ic ic-' + t + '"></i>' + LBL[t] + '</b><div class="pbtn"><button class="btn" data-t="' + t + '" data-d="-1">\u2212</button><span id="pc-' + t + '">0</span><button class="btn" data-t="' + t + '" data-d="1">+</button></div></div>').join('') + '<p class="phint">Instruction and Definitions.</p>';
+            $('#pal').innerHTML = ['cell', 'nuc', 'cen', 'chr'].map(t => '<div class="prow"><b><i class="ic ic-' + t + '"></i>' + LBL[t] + '</b><div class="pbtn"><button class="btn" data-t="' + t + '" data-d="-1">\u2212</button><span id="pc-' + t + '">0</span><button class="btn" data-t="' + t + '" data-d="1">+</button></div></div>').join('') + '<p class="phint"><b>Note:<br> • Once the workspace is playing some functions or features inside are not functional. Pause "❚❚" the workspace first then edit your cell.<br><br> • To check if your arrangement for every phase is correct, kindly click the "🔚" icon, and set the chromosome number based from the given problem.</b></p>';
             $('#pal').addEventListener('click', e => {
                 const b = e.target.closest('button');
                 if(b) setB(b.dataset.t, cnt(b.dataset.t) + +b.dataset.d)
@@ -1983,30 +2164,130 @@
                 }
             };
 
+            const per = (n, d) => d > 0 && n % d === 0 ? n / d : 0;
+            const perCell = () => per(chrN(), bc('cell'));
+            const perNuc  = () => per(chrN(), bc('nuc'));
+            const perPole = () => per(chrN(), 2 * Math.max(1, bc('cell')));
             const mans = {}, bc = t => PB[phase].filter(x => x.t === t).length, chrN = () => bc('chr'), pairN = () => cnt('chr');
             const numOpts = v => {
                 const c = [2 * v, v + 1, Math.max(0, v - 1), 2 * v + 1, Math.ceil(v / 2), 4 * v].filter((x, i, a) => x !== v && a.indexOf(x) === i); 
                 return [v, ...c.slice(0, 3)].sort((a, b) => a - b).map(String)
             };
 
+            const DRO = 'One day, Aling Nena noticed a swarm of fruit flies (<i>Drosophila melanogaster</i>) in her pantry. The community health inspector explained that the flies came from rotting meat and that they can reproduce very quickly, in just 2–4 days, which is why her pantry was full of them. The fruit fly has a diploid chromosome number of 2n = 8, which means its haploid germline cells contain n = 4 chromosomes. These haploid cells are formed through meiosis, a special type of cell division that reduces the chromosome number by half to produce gametes. Build the germline cells of Drosophila melanogaster throughout the meiotic phases by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes, and then answer questions related to each phase.';
             const qD = (q, f, need, ok, h) => ({q, f, need, ok, h});
-
+            const qS = (q, o, ok, h) => ({q, o, ok, h});
             const MQ = [
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
-                [qD('How many chromosomes are in this phase?', chrN, 'chromosomes', v => 'Yes! you built ' + v + 'chromosomes, so 2n = ' + v + '.', 'Count the chromosomeson your work.')],
+                [
+                    qD(DRO + '<br><br><b>According to the diploid number given, how many chromosomes should a <i>Drosophila melanogaster</i> germline cell have before meiosis begins?</b>', chrN, 'chromosomes', v => 'Yes! With 2n = 8, the germline cell has ' + v + ' chromosomes.', 'The diploid number 2n = 8 is the total number of chromosomes.'),
+                    qD('How many nuclei did you place inside the fruit fly cell?', () => bc('nuc'), 'nuclei', v => 'Yes! The cell has ' + v + ' nucleus holding all its chromosomes.', 'Count the dashed nucleus on your work.'),
+                    qD('How many centrioles did you place beside the nucleus?', () => bc('cen'), 'centrioles', v => 'Yes! You placed ' + v + ' centrioles.', 'Count the small yellow centrioles on your work.'),
+                    qD('How many cell membranes enclose the germline cell?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membrane surrounds the whole cell.', 'Count the large circle around everything.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. What can you notice about the chromosomes during the Interphase of Meiosis compared to Mitosis?', ['Chromosomes are not yet visible, as they appear as chromatin in both.', 'Chromosomes are already visible and paired in both.', 'Chromosomes are doubled only in mitosis but not in meiosis.', 'Chromosomes are broken into pieces in meiosis but whole in mitosis.'], 'Correct! Because in Interphase, whether in mitosis or meiosis, the chromosomes are still in the form of thin, uncoiled chromatin strands, so they are not yet visible under the microscope.', 'Because in Interphase, whether in mitosis or meiosis, the chromosomes are still in the form of thin, uncoiled chromatin strands, so they are not yet visible under the microscope.'),
+                    qS('Do you think the chromosomes contained in gametes produced by Meiosis also undergo Interphase?', ['No, gametes do not undergo Interphase again after meiosis.', 'Yes, they always go through another Interphase before fertilization.', 'Yes, but only sperm cells undergo Interphase.', 'No, gametes skip Interphase and immediately divide again.'], 'Correct! Gametes produced by meiosis do not undergo another Interphase because they are already mature sex cells meant for fertilization, not further division.', 'Gametes produced by meiosis do not undergo another Interphase because they are already mature sex cells meant for fertilization, not further division.'),
+                    qS('What important event happens to the chromosomes during Interphase of Meiosis?', ['The chromosomes duplicate to prepare for division.', 'The chromosomes disappear completely.', 'The chromosomes immediately line up in pairs.', 'The chromosomes break into smaller pieces.'], 'Correct! During Interphase of Meiosis, the chromosomes duplicate so that each one has an identical copy, which is necessary for the later stages of cell division.', 'During Interphase of Meiosis, the chromosomes duplicate so that each one has an identical copy, which is necessary for the later stages of cell division.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a diploid chromosome number of 2n = 8. Build a germline cell in Prophase I by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>Using 2n = 8, how many chromosomes appear in the germline cell during Prophase I?', chrN, 'chromosomes', v => 'Yes! The cell shows ' + v + ' chromosomes, each condensed into an X shape.', 'Use the diploid number 2n = 8.'),
+                    qD('Homologous chromosomes now pair up and swap segments. How many homologous pairs form?', () => Math.round(chrN() / 2), 'pairs', v => 'Yes! ' + v + ' homologous pairs form, matching n = ' + v + '.', 'Divide the total number of chromosomes by 2.'),
+                    qD('How many nuclei did you add before the nuclear envelope starts to break down?', () => bc('nuc'), 'nuclei', v => 'Yes! You added ' + v + ' nucleus, which begins to fade in this phase.', 'Count the nucleus on your work.'),
+                    qD('How many centrioles are present as the spindle begins to form?', () => bc('cen'), 'centrioles', v => 'Yes! There are ' + v + ' centrioles ready to organize the spindle fibers.', 'Count the centrioles on your work.'),
+                    qD('How many membranes surround the whole fruit fly cell?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membrane encloses everything.', 'Count the large outer circle.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. What is the main difference in the chromosomes during Prophase I of Meiosis compared to Prophase in Mitosis?', ['In Prophase I of Meiosis, homologous chromosomes pair up and crossing over happens, while in Mitosis chromosomes do not pair or exchange parts.', 'In both, chromosomes pair up with their identical copies.', 'In Mitosis, chromosomes disappear completely, while in Meiosis they stay visible.', 'In Prophase I of Meiosis, chromosomes line up single file, while in Mitosis they line up in pairs.'], 'Correct! In Prophase I of Meiosis, homologous chromosomes pair and exchange genetic material (crossing over), which does not happen in Prophase of Mitosis.', 'In Prophase I of Meiosis, homologous chromosomes pair and exchange genetic material (crossing over), which does not happen in Prophase of Mitosis.'),
+                    qS('Why do homologous pairs of chromosomes appear in Prophase I of Meiosis?', ['Because homologous chromosomes pair up to allow crossing over.', 'Because chromosomes need to disappear before division.', 'Because chromosomes break into smaller fragments.', 'Because chromosomes line up in a single file immediately.'], 'Correct! Homologous pairs form in Prophase I so they can exchange genetic material through crossing over, which increases genetic variation in gametes.', 'Homologous pairs form in Prophase I so they can exchange genetic material through crossing over, which increases genetic variation in gametes.'),
+                    qS('What special process happens during Prophase I of Meiosis that does not happen in Mitosis?', ['Homologous chromosomes exchange genetic material through crossing over.', 'Chromosomes disappear completely.', 'Chromosomes line up a single file in the middle of the cell.', 'The nuclear membrane instantly reforms.'], 'Correct! Crossing over occurs in Prophase I, where homologous chromosomes swap pieces of DNA, creating genetic variation in gametes.', 'Crossing over occurs in Prophase I, where homologous chromosomes swap pieces of DNA, creating genetic variation in gametes.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a diploid chromosome number of 2n = 8. Build a germline cell in Metaphase I by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>How many chromosomes are lined up at the middle of the fruit fly cell, arranged as homologous pairs?', chrN, 'chromosomes', v => 'Yes! ' + v + ' chromosomes are lined up at the center, matching 2n = ' + v + '.', 'Count the chromosomes at the middle. Remember 2n = 8.'),
+                    qD('How many homologous pairs sit side by side along the metaphase plate?', () => Math.round(chrN() / 2), 'pairs', v => 'Yes! ' + v + ' homologous pairs line up together.', 'Divide the total number of chromosomes by 2.'),
+                    qD('How many centrioles sit at the opposite ends of the cell?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles sit at the poles.', 'Count the centrioles on your work.'),
+                    qD('How many cell membranes are surrounding the lined-up chromosomes?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membrane surrounds the chromosomes.', 'Count the large outer circle.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. What is the main difference in the chromosomes during Metaphase I of Meiosis compared to Metaphase in Mitosis?', ['In Metaphase I, homologous chromosome pairs line up side by side, while in Mitosis individual chromosomes line up single file.', 'In Metaphase I, chromosomes disappear, while in Mitosis they stay visible.', 'In both, chromosomes line up randomly without any order.', 'In Mitosis, chromosomes pair up and cross over, while in Meiosis they do not.'], 'Correct! In Metaphase I of Meiosis, homologous pairs align together at the cell’s equator, while in Mitosis, single chromosomes line up individually.', 'In Metaphase I of Meiosis, homologous pairs align together at the cell’s equator, while in Mitosis, single chromosomes line up individually.'),
+                    qS('Why do homologous chromosome pairs line up together during Metaphase I of Meiosis?', ['To ensure each gamete gets one chromosome from each pair.', 'To prepare for crossing over.', 'To make the chromosomes disappear.', 'To allow the nuclear membrane to reform.'], 'Correct! Homologous pairs line up so that when they separate, each gamete receives one chromosome from each pair, ensuring genetic balance.', 'Homologous pairs line up so that when they separate, each gamete receives one chromosome from each pair, ensuring genetic balance.'),
+                    qS('How is the arrangement of chromosomes in Metaphase I of Meiosis important for genetic variation?', ['The random orientation of homologous pairs allows different combinations of chromosomes in gametes.', 'Chromosomes always line up in the same order, so gametes are identical.', 'Chromosomes break apart into fragments to create variation.', 'The nuclear membrane reforms to shuffle the chromosomes.'], 'Correct! The random way homologous pairs line up in Metaphase I leads to different chromosome combinations in gametes, increasing genetic diversity.', 'The random way homologous pairs line up in Metaphase I leads to different chromosome combinations in gametes, increasing genetic diversity.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a diploid chromosome number of 2n = 8. Build a germline cell in Anaphase I by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>In total, how many chromosomes are present in the cell as the homologous pairs are pulled apart?', chrN, 'chromosomes', v => 'Yes! There are still ' + v + ' chromosomes, because only the homologous pairs separate.', 'The sister chromatids stay together, so the total does not change.'),
+                    qD('How many chromosomes travel toward EACH pole?', perPole, 'chromosomes', v => 'Yes! ' + v + ' chromosomes move to each pole, which is the haploid number n = ' + v + '.', 'Divide the total number of chromosomes by 2.'),
+                    qD('How many centrioles are found at the two ends of the cell?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles, one at each end, pull the pairs apart.', 'Count the centrioles on your work.'),
+                    qD('How many cell membranes enclose the cell while the homologous chromosomes move apart?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membrane still surrounds the whole cell.', 'The cell has not split yet, so count the single outer circle.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. What is the main difference in the chromosomes during Anaphase I of Meiosis compared to Anaphase in Mitosis?', ['In Anaphase I, homologous chromosomes separate, while in Mitosis sister chromatids separate.', 'In Mitosis, homologous chromosomes pair up and move to opposite poles, while in Meiosis they do not.', 'In both, sister chromatids split apart at the same time.', 'In Anaphase I, chromosomes disappear completely, while in Mitosis they stay visible.'], 'Correct! In Anaphase I of Meiosis, homologous chromosome pairs are pulled apart, while in Anaphase of Mitosis, the sister chromatids of each chromosome separate.', 'In Anaphase I of Meiosis, homologous chromosome pairs are pulled apart, while in Anaphase of Mitosis, the sister chromatids of each chromosome separate.'),
+                    qS('Why does the way chromosomes separate in Anaphase I of Meiosis contribute to genetic diversity?', ['Because homologous chromosomes are pulled apart randomly, creating different combinations in gametes.', 'Because sister chromatids always split evenly, making gametes identical.', 'Because chromosomes disappear completely during Anaphase I.', 'Because the nuclear membrane reforms to shuffle the chromosomes.'], 'Correct! In Anaphase I of Meiosis, homologous chromosomes separate in a random way, which leads to unique combinations of chromosomes in gametes and increases genetic variation.', 'In Anaphase I of Meiosis, homologous chromosomes separate in a random way, which leads to unique combinations of chromosomes in gametes and increases genetic variation.'),
+                    qS('Why do sister chromatids stay together during Anaphase I of Meiosis?', ['Because only homologous chromosomes are separated at this stage.', 'Because the chromatids are not yet formed.', 'Because the nuclear membrane holds them tightly.', 'Because they disappear before they can separate.'], 'Correct! In Anaphase I, homologous chromosomes are pulled apart, but sister chromatids remain attached until Anaphase II.', 'In Anaphase I, homologous chromosomes are pulled apart, but sister chromatids remain attached until Anaphase II.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a diploid chromosome number of 2n = 8. Build a germline cell in Telophase I by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>In all, how many chromosomes are present in the cell at the end of Telophase I?', chrN, 'chromosomes', v => 'Yes! There are ' + v + ' chromosomes in all, split between the two ends.', 'Count the chromosomes at both ends of the cell.'),
+                    qD('How many chromosomes are found inside each new nucleus?', perNuc, 'chromosomes', v => 'Yes! Each nucleus holds ' + v + ' chromosomes, so each one is now haploid (n = ' + v + ').', 'Divide the total number of chromosomes by the number of nuclei.'),
+                    qD('How many nuclei have formed in the cell?', () => bc('nuc'), 'nuclei', v => 'Yes! ' + v + ' nuclei have formed, one around each set of chromosomes.', 'Count the dashed nuclei on your work.'),
+                    qD('How many centrioles are located at the ends of the elongated cell?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles, one pair at each end.', 'Count the centrioles on your work.'),
+                    qD('How many cell membranes are shown around the pinching cell?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membrane is still pinching inward around the cell.', 'The cell is still connected, so count the single outer shape.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. How are the chromosomes different in Telophase I of Meiosis compared to Telophase in Mitosis?', ['In Telophase I, each new nucleus has half the chromosome number, while in Mitosis each new nucleus has the full set.', 'In Mitosis, no nuclei form, while in Meiosis nuclei always form.', 'In both, chromosomes completely disappear and never return.', 'In Telophase I, sister chromatids separate, while in Mitosis homologous chromosomes separate.'], 'Correct! In Telophase I of Meiosis, cells become haploid with half the chromosome number, while in Telophase of Mitosis, cells remain diploid with the full set of chromosomes.', 'In Telophase I of Meiosis, cells become haploid with half the chromosome number, while in Telophase of Mitosis, cells remain diploid with the full set of chromosomes.'),
+                    qS('What happens to the shape of the cell during Telophase I of Meiosis?', ['The cell stretches and begins to elongate into two smaller cells.', 'The cell shrinks and disappears completely.', 'The cell instantly forms four daughter cells.', 'The cell becomes round and stops dividing.'], 'Correct! In Telophase I, the cell elongates and starts splitting into two daughter cells, each with half the chromosome number.', 'In Telophase I, the cell elongates and starts splitting into two daughter cells, each with half the chromosome number.'),
+                    qS('How do the chromosomes look inside the nuclei during Telophase I of Meiosis?', ['They remain condensed but are separated into two groups at opposite poles.', 'They disappear permanently and never return.', 'They line up again in the middle of the cell.', 'They break into fragments to form new chromosomes.'], 'Correct! In Telophase I, chromosomes stay condensed and are grouped at opposite ends of the cell, preparing for the next division.', 'In Telophase I, chromosomes stay condensed and are grouped at opposite ends of the cell, preparing for the next division.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a diploid chromosome number of 2n = 8. Build the cells undergoing Cytokinesis I by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>Altogether, how many chromosomes are present in the two daughter cells combined after Meiosis I?', chrN, 'chromosomes', v => 'Yes! The two daughter cells hold ' + v + ' chromosomes combined.', 'Add the chromosomes of both daughter cells.'),
+                    qD('How many chromosomes does each separate cell receive?', perCell, 'chromosomes', v => 'Yes! Each cell receives ' + v + ' chromosomes, so n = ' + v + '. Each chromosome still has two sister chromatids.', 'Divide the total number of chromosomes by the number of cells.'),
+                    qD('How many nuclei are present now that the cell has split in two?', () => bc('nuc'), 'nuclei', v => 'Yes! There are ' + v + ' nuclei, one in each daughter cell.', 'Count the dashed nuclei on your work.'),
+                    qD('How many cell membranes did the cell form when it divided?', () => bc('cell'), 'cell membrane', v => 'Yes! There are ' + v + ' separate cells, each with its own membrane.', 'Count the outer circles on your work.'),
+                    qD('How many centrioles are inside the two cells?', () => bc('cen'), 'centrioles', v => 'Yes! You placed ' + v + ' centrioles for the two new cells.', 'Count the centrioles on your work.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. How does the shape of the cell change during Cytokinesis in Meiosis?', ['The cell membrane pinches inward, creating two separate cells.', 'The cell becomes perfectly round and stops dividing.', 'The cell stretches but never separates.', 'The cell breaks into fragments.'], 'Correct! The cell membrane pinches in, with such purpose to form two distinct daughter cells.', 'The cell membrane pinches in, with such purpose to form two distinct daughter cells.'),
+                    qS('What happens to the cell during Cytokinesis after Meiosis I?', ['The cell splits into two daughter cells, each with half the chromosome number.', 'The cell instantly forms four daughter cells.', 'The cell disappears completely.', 'The cell grows larger without dividing.'], 'Correct! Cytokinesis after Meiosis I divides the cell into two haploid daughter cells.', 'Cytokinesis after Meiosis I divides the cell into two haploid daughter cells.'),
+                    qS('What is the difference between Cytokinesis in Meiosis I and Cytokinesis in Mitosis?', ['In Meiosis I, cells formed are haploid, while in Mitosis cells remain diploid.', 'In both, cells always end up diploid.', 'In Meiosis I, four cells form immediately, while in Mitosis only two form.', 'In Mitosis, the cell membrane never pinches inward.'], 'Correct! Cytokinesis in Meiosis I produces haploid cells, while in Mitosis the daughter cells stay diploid.', ''),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a haploid chromosome number of n = 4. Build a germline cell in Prophase II by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>The two cells from Meiosis I now enter Prophase II. How many chromosomes are present in both cells combined?', chrN, 'chromosomes', v => 'Yes! Together the two cells hold ' + v + ' chromosomes.', 'Count the chromosomes in both cells.'),
+                    qD('How many chromosomes does EACH cell contain?', perCell, 'chromosomes', v => 'Yes! Each cell contains ' + v + ' chromosomes, the haploid number n = ' + v + '.', 'Divide the total number of chromosomes by the number of cells.'),
+                    qD('How many cell membranes are shown, one for each cell?', () => bc('cell'), 'cell membrane', v => 'Yes! There are ' + v + ' cells, each with its own membrane.', 'Count the outer circles on your work.'),
+                    qD('How many nuclei are present as the nuclear envelopes break down again?', () => bc('nuc'), 'nuclei', v => 'Yes! There are ' + v + ' nuclei, one in each cell.', 'Count the dashed nuclei on your work.'),
+                    qD('How many centrioles are there across the two cells?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles in total, a pair in each cell.', 'Count the centrioles on your work.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. How is the number of cells different in Prophase I compared to Prophase II of Meiosis?', ['In Prophase I, there is one cell, while in Prophase II there are two cells dividing.', 'In both, there are always four cells dividing at once.', 'In Prophase I, there are two cells, while in Prophase II there is only one.', 'In Prophase II, cells disappear completely before dividing.'], 'Correct! Prophase I begins with a single diploid cell, while Prophase II starts with two haploid cells formed after Meiosis I.', 'Prophase I begins with a single diploid cell, while Prophase II starts with two haploid cells formed after Meiosis I.'),
+                    qS('What is the main difference in the chromosomes during Prophase I compared to Prophase II of Meiosis?', ['In Prophase I, homologous chromosomes pair up and crossing over occurs, while in Prophase II chromosomes do not pair or cross over.', 'In both, homologous chromosomes always pair and exchange parts.', 'In Prophase I, chromosomes disappear completely, while in Prophase II they stay visible.', 'In Prophase II, chromosomes line up single file, while in Prophase I they do not.'], 'Correct! In Prophase I, homologous chromosomes pair and exchange genetic material (crossing over), but in Prophase II, chromosomes simply condense again without pairing or crossing over.', 'In Prophase I, homologous chromosomes pair and exchange genetic material (crossing over), but in Prophase II, chromosomes simply condense again without pairing or crossing over.'),
+                    qS('Why are there two cells present during Prophase II of Meiosis?', ['Because Meiosis I already divided the original cell into two haploid cells.', 'Because chromosomes instantly split into four cells before Prophase II.', 'Because cells always start in pairs during any stage of meiosis.', 'Because the nuclear membrane reforms twice in Prophase II.'], 'Correct! There are two cells in Prophase II because the first division (Meiosis I) already produced two haploid daughter cells, each now preparing for the second division.', 'There are two cells in Prophase II because the first division (Meiosis I) already produced two haploid daughter cells, each now preparing for the second division.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a haploid chromosome number of n = 4. Build a germline cell in Metaphase II by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>Altogether, how many chromosomes are lined up at the middle of the two cells?', chrN, 'chromosomes', v => 'Yes! ' + v + ' chromosomes are lined up, single file, in the two cells.', 'Count the chromosomes at the middle of both cells.'),
+                    qD('How many chromosomes line up at the middle of EACH cell?', perCell, 'chromosomes', v => 'Yes! Each cell lines up ' + v + ' chromosomes, matching n = ' + v + '.', 'Divide the total number of chromosomes by the number of cells.'),
+                    qD('How many cell membranes enclose the lined-up chromosomes?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membranes, one around each cell.', 'Count the outer circles on your work.'),
+                    qD('How many centrioles sit at the poles of the two cells?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles in total, two in each cell.', 'Count the centrioles on your work.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. What is the difference in the arrangement of chromosomes during Metaphase I of Meiosis compared to Metaphase II?', ['In Metaphase I, homologous chromosome pairs line up side by side, while in Metaphase II single chromosomes line up in one line.', 'In both, chromosomes line up randomly without any order.', 'In Metaphase I, chromosomes disappear, while in Metaphase II they stay visible.', 'In Metaphase II, homologous pairs cross over again, while in Metaphase I they do not.'], 'Correct! In Metaphase I, homologous pairs align together at the equator, while in Metaphase II, individual chromosomes line up single file, similar to mitosis.', 'In Metaphase I, homologous pairs align together at the equator, while in Metaphase II, individual chromosomes line up single file, similar to mitosis.'),
+                    qS('What is the difference in the number of cells during Metaphase I and Metaphase II?', ['Metaphase I occurs in one cell, while Metaphase II occurs in two haploid cells.', 'Both occur in four cells at once.', 'Metaphase I occurs in two cells, while Metaphase II occurs in one.', ' Metaphase II occurs without any cells dividing.'], 'Correct! Metaphase I occurs in one diploid cell with homologous pairs lined up, while Metaphase II happens in two haploid cells where single chromosomes align individually.', 'Metaphase I occurs in one diploid cell with homologous pairs lined up, while Metaphase II happens in two haploid cells where single chromosomes align individually.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a haploid chromosome number of n = 4. Build a germline cell in Anaphase II by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>Counting each separated sister chromatid as its own chromosome, how many chromosomes are present in both cells?', chrN, 'chromosomes', v => 'Yes! There are ' + v + ' chromosomes now, because every chromosome has split into two.', 'The sister chromatids have separated, so double the count from Metaphase II.'),
+                    qD('How many chromosomes travel toward EACH pole?', perPole, 'chromosomes', v => 'Yes! ' + v + ' chromosomes move to each pole, which is n = ' + v + '.', 'Divide the total number of chromosomes by the number of poles.'),
+                    qD('How many chromosomes does each cell contain at this moment?', perCell, 'chromosomes', v => 'Yes! Each cell briefly holds ' + v + ' chromosomes before it divides.', 'Divide the total number of chromosomes by the number of cells.'),
+                    qD('How many cell membranes enclose the cells while the sister chromatids separate?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membranes, one around each cell.', 'Count the outer circles on your work.'),
+                    qD('How many centrioles are found at the ends of the two cells?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles in total pull the sister chromatids apart.', 'Count the centrioles on your work.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. What is the main difference in the chromosomes during Anaphase II compared to Anaphase I of Meiosis?', ['In Anaphase II, sister chromatids separate, while in Anaphase I homologous chromosomes separate.', 'In both, homologous chromosomes separate at the same time.', 'In Anaphase I, sister chromatids separate, while in Anaphase II homologous chromosomes separate.', 'In Anaphase II, chromosomes disappear completely, while in Anaphase I they stay visible.'], 'Correct! In Anaphase I, homologous chromosomes are pulled apart, while in Anaphase II, the sister chromatids of each chromosome finally separate.', 'In Anaphase I, homologous chromosomes are pulled apart, while in Anaphase II, the sister chromatids of each chromosome finally separate.'),
+                    qS('What is the difference in the number of cells during Anaphase I compared to Anaphase II of Meiosis?', ['Anaphase I occurs in one diploid cell, while Anaphase II occurs in two haploid cells.', 'Both occur in four cells at once.', 'Anaphase I occurs in two cells, while Anaphase II occurs in one.', 'Anaphase II occurs without any cells dividing.'], 'Correct! Anaphase I happens in a single diploid cell where homologous chromosomes separate, while Anaphase II takes place in two haploid cells where sister chromatids separate.', 'Anaphase I happens in a single diploid cell where homologous chromosomes separate, while Anaphase II takes place in two haploid cells where sister chromatids separate.'),
+                    qS('How does the separation of chromosomes in Anaphase II of Meiosis help increase genetic variation?', ['Because sister chromatids split randomly, giving gametes unique genetic combinations.', 'Because the nuclear membrane reforms to shuffle the chromosomes.', 'Because chromosomes vanish completely during Anaphase II.', 'Because homologous chromosomes always stay together, making gametes identical.'], 'Correct! Sister chromatids in Anaphase II separate in a random way, so gametes end up with different genetic combinations, which increases diversity.', 'Sister chromatids in Anaphase II separate in a random way, so gametes end up with different genetic combinations, which increases diversity.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a haploid chromosome number of n = 4. Build a germline cell in Telophase II by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>How many chromosomes are present in all the cells combined at the end of Telophase II?', chrN, 'chromosomes', v => 'Yes! There are ' + v + ' chromosomes in all, 4 in each of the new nuclei.', 'Count the chromosomes in every new nucleus.'),
+                    qD('How many chromosomes are inside each new nucleus?', perNuc, 'chromosomes', v => 'Yes! Each nucleus holds ' + v + ' chromosomes, so each cell is haploid (n = ' + v + ').', 'Divide the total number of chromosomes by the number of nuclei.'),
+                    qD('How many nuclei have formed in the fruit fly germline cells?', () => bc('nuc'), 'nuclei', v => 'Yes! ' + v + ' nuclei have formed, which will become ' + v + ' haploid gametes.', 'Count the dashed nuclei on your work.'),
+                    qD('How many cell membranes are shown around the dividing cells?', () => bc('cell'), 'cell membrane', v => 'Yes! ' + v + ' cell membranes are pinching around the cells.', 'Count the outer shapes on your work.'),
+                    qD('How many centrioles are located at the ends of the cells?', () => bc('cen'), 'centrioles', v => 'Yes! ' + v + ' centrioles, one pair at the end of each cell.', 'Count the centrioles on your work.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. How are the chromosomes different in Telophase II compared to Telophase I?', ['In Telophase II, sister chromatids have separated into individual chromosomes, while in Telophase I homologous pairs were separated.', 'In both, chromosomes disappear permanently.', 'In Telophase I, sister chromatids separate, while in Telophase II homologous pairs separate.', 'In Telophase II, chromosomes double again before division.'], 'Correct! Telophase I separates homologous pairs, while Telophase II separates sister chromatids into individual chromosomes.', 'Telophase I separates homologous pairs, while Telophase II separates sister chromatids into individual chromosomes.'),
+                    qS('What happens to the shape of the cell during Telophase II?', ['Each haploid cell forms pinching in the middle, to form four smaller gametes.', 'The cell shrinks and disappears.', 'The cell instantly forms eight daughter cells.', 'The cell becomes round and stops dividing.'], 'Correct! Telophase II, each haploid cell starts to split with a cleavage furrow to begin with, producing four gametes in total.', 'Telophase II, each haploid cell starts to split with a cleavage furrow to begin with, producing four gametes in total.'),
+                ],
+                [
+                    qD('<i>Drosophila melanogaster</i> has a haploid chromosome number of n = 4. Build the cells undergoing Cytokinesis II by adding the required number of cell membranes, centrioles, chromosomes, and nuclear envelopes. Arrange all structures in their proper positions.<br><br>Altogether, how many chromosomes are present in the four new cells combined?', chrN, 'chromosomes', v => 'Yes! The four new cells hold ' + v + ' chromosomes combined.', 'Add the chromosomes of all four cells.'),
+                    qD('How many chromosomes does each of the four cells receive?', perCell, 'chromosomes', v => 'Yes! Each cell receives ' + v + ' chromosomes, so each one is haploid (n = ' + v + ').', 'Divide the total number of chromosomes by the number of cells.'),
+                    qD('How many nuclei are present now that both cells have split?', () => bc('nuc'), 'nuclei', v => 'Yes! There are ' + v + ' nuclei, one in each new cell.', 'Count the dashed nuclei on your work.'),
+                    qD('How many separate cell membranes result from one germline cell?', () => bc('cell'), 'cell membrane', v => 'Yes! One diploid germline cell makes ' + v + ' separate haploid cells.', 'Count the outer circles on your work.'),
+                    qD('How many centrioles are inside the four new cells?', () => bc('cen'), 'centrioles', v => 'Yes! You placed ' + v + ' centrioles for the new cells.', 'Count the centrioles on your work.'),
+                    qS('Ensure that you arranged the components of cell properly. Click the Play button below. Does the shape of the cell change during Cytokinesis after Telophase II?', ['Yes, the cell membrane pinches inward to separate.', 'No, the cell shape stays the same.', 'Yes, the cell instantly forms eight cells.', 'No, the cell disappears completely.'], 'Correct! During Cytokinesis after Telophase II, the cell membrane pinches inward to split the cell.', 'During Cytokinesis after Telophase II, the cell membrane pinches inward to split the cell.'),
+                    qS('What happens to the cell during Cytokinesis after Telophase II?', ['Each haploid cell divides, producing four gametes in total.', 'The cell grows larger without dividing.', 'The cell shrinks and vanishes.', 'The cell reforms into one diploid cell. '], 'Correct! Cytokinesis after Telophase II divides the two haploid cells again, resulting in four gametes.', 'Cytokinesis after Telophase II divides the two haploid cells again, resulting in four gametes.'),
+                    qS('What is the difference between Cytokinesis in Meiosis I and Cytokinesis in Meiosis II?', ['Meiosis I produces two haploid cells, while Meiosis II produces four gametes.', 'Meiosis I produces diploid cells, while Meiosis II produces diploid cells again.', 'Both produce four gametes immediately.', 'Meiosis II does not involve cell division.'], 'Correct! Cytokinesis in Meiosis I creates two haploid cells, while Cytokinesis in Meiosis II creates four gametes.', 'Cytokinesis in Meiosis I creates two haploid cells, while Cytokinesis in Meiosis II creates four gametes.'),
+                ],
             ];
 
                function renderMCQ(){
                 $('#phname').textContent = PH[phase].n + ' (build)';
                 $('#phname').style.color = PH[phase].c;
-                $('#phtxt').textContent = BD[phase] + ' The questions use what you built in this page.';
+                $('#phtxt').textContent = '';
                 const box = $('#qs');
                 box.innerHTML = '';
                 let got = 0, tot = 0;
@@ -2027,7 +2308,9 @@
                             const b = document.createElement('button');
                             b.className = 'opt' + (t === pick ? ' pick' : '');
                             b.textContent = t;
+                            if(pick !== undefined) b.disabled = true;
                             b.onclick = () => {
+                                if(mans[key] !== undefined) return;
                                 mans[key] = t;
                                 renderMCQ();
                             };
@@ -2042,12 +2325,9 @@
                 });
                 const done = tot > 0 && got === tot;
                 $('#fb').className = done ? 'done' : '';
-                $('#fbm').textContent = tot === 0 ? 'Build this phase to unlock some questions' : done ? 'Phase complete! 🥳' : got + ' of ' + tot + 'correct.';
+                $('#fbm').textContent = tot === 0 ? 'Have fun building cells.' : done ? 'Phase complete! 🥳' : got + ' of ' + tot + ' correct.';
                 $('#score').textContent = got + ' / ' + tot;
             }
-
-
-
         </script>
     </body>
 </html>
