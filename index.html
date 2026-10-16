@@ -751,7 +751,7 @@
                      <button class="btn" id="next">▶️</button>
                      <button class="btn" id="build">🧬</button>
                      <span class="cnt">Chromosomes
-                        <button class="btn" id="minus">-</button><input id="cnt" type="number" min="2" max="46" inputmode="numeric" aria-label="Number of Chromosomes"><button class="btn" id="plus">+</button>
+                        <button class="btn" id="minus">-</button><input id="cnt" type="number" min="2" inputmode="numeric" aria-label="Number of Chromosomes"><button class="btn" id="plus">+</button>
                     </span>
                 </div>
                 <p class="hint"></p>
@@ -1471,7 +1471,7 @@
             setPhase(0);
             requestAnimationFrame(frame);
 
-            const PB = [[], [], [], [], [], [], [], [], [], [], []], names = [], els = {}, CAP = 2000, CD = 360, LBL = {cell:'Cell membrane', nuc:'Nucleus', cen:'Centriole', chr:'Chromosome'};
+            const PB = [[], [], [], [], [], [], [], [], [], [], []], names = [], els = {}, CAP = Infinity, CD = 360, LBL = {cell:'Cell membrane', nuc:'Nucleus', cen:'Centriole', chr:'Chromosome'};
             const board = $('#board'), world = $('#world'), cnt = t => PB[phase].filter(x => x.t === t && !x.side).length;
             const sided = ph => ph >= 7, FIBP = [2, 3, 4, 6, 7];
             const rad = c => CD * (c.sc || 1) / 2;
