@@ -1865,6 +1865,12 @@
                     const q = e.querySelector('path[data-st="' + st + '"]');
                     if(q) q.setAttribute('d', threadD(sh[st], tt, si * 2 + e.k))
                 });
+
+                e.querySelectorAll('path[data-ov]').forEach(q => {
+                    const st = q.dataset.ov;
+                    q.setAttribute('d', threadD(sh[st], tt, (st === 'b' ? 2 : 0) + e.k));
+                });
+                
                 e.querySelectorAll('circle.hd').forEach(c => {
                     const q = sh[c.dataset.st][+c.dataset.i];
                     c.setAttribute('cx', q[0]);
@@ -1899,7 +1905,7 @@
                         }).join('');
                         if(one){
                             const st = sd ? 'b' : 'a', cc = sd ? b : a;
-                            return p(smoothD(sh[st]), cc, 2.4, 'data-st="' + st + '"') + hs(st, cc);
+                            return p(smoothD(sh[st]), cc, 2.4, 'data-st="' + st + '"') + p(smoothD(sh[st]), x, 3, 'data-ov="' + st + '" pathLength="100" stroke-dasharray="28 200" stroke-dashoffset="' + (lf === !!sd ? -22 : -50) + '"') + hs(st, cc);
                         }
                         return p(smoothD(sh.a), a, 2.4, 'data-st="a"') + p(smoothD(sh.b), b, 2.4, 'class="rep"  pathLength="100" data-st="b"') + hs('b', b) + hs('a', a);
                     })(),
