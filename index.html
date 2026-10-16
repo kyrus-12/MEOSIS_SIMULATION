@@ -786,7 +786,7 @@
             let build = false;
             const THREAD_LEN = 0.35;
             const HUE = [330, 200, 265, 155, 40];
-            let thr = 1, thS = 1, th2 = 0, N = 10, P = 5, phase = 0, sel = -1, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
+            let thr = 1, thS = 1, th2 = 0, xo = 0, N = 10, P = 5, phase = 0, sel = -1, timer = null, W = 0, H = 0, R = 100, cur = null, t = 0, last = performance.now();
             const cvs = $('#c'), ctx = cvs.getContext('2d');
 
             const stepsEl = $('#steps');
@@ -1237,6 +1237,15 @@
                 ctx.strokeStyle = col;
                 ctx.lineWidth = lw;
                 ctx.stroke();
+                if(xo > 0.02 && (i ^ 1) < N){
+                    const top = (i & 1) ? kc === 0 : kc === 1, a0 = top ? 16 : 45, a1 = top ? 45 : 74;
+                    ctx.globalAlpha = thr * am * (dim ? 0.55 : 0.95) * xo;
+                    ctx.beginPath();
+                    for(let s = a0; s <= a1; s++) s == a0 ? ctx.moveTo(pts[s][0], pts[s][1]) : ctx.lineTo(pts[s][0], pts[s][1]);
+                    ctx.strokeStyle = 'hsl(' + hue((i ^ 1) >> 1) + ' 80% ' + ((i ^ 1) & 1 ? 44 : 60) + '%)';
+                    ctx.stroke();
+                    ctx.globalAlpha = thr * am * (dim ? 0.55 : 0.95);
+                }
                 const cyc = ((t + i * 0.7) % 10) / 10, rp = clamp01((cyc - 0.1) / 0.55), fd = cyc > 0.9 ? (1 - cyc) / 0.1 : 1;
                 if(rp > 0 && th2 < 0.98){
                     const o = 0.02 * R, n2 = Math.max(2, Math.round(rp * pts.length));ctx.globalAlpha = thr * am * (dim ? 0.55 : 0.95) * fd * (1 - th2);
@@ -1404,6 +1413,7 @@
                 if(W){
                     const T = target(bph(), phase === 5 || phase === 10), f = 1 - Math.exp(-dt * 3.5);
                     thr = lerp(thr, (phase === 0 || phase === 10) ? 1 : 0, f);
+                    xo = lerp(xo, phase >= 1 ? 1 : 0, f);
                     thS = lerp(thS, bph() >= 8 ? 0.4 : 1, f);
                     th2 = lerp(th2, bph() >= 8 ? 1 : 0, f);
                     if(!cur)cur = JSON.parse(JSON.stringify(T));
